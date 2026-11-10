@@ -6,31 +6,26 @@
   "note": "与 C02 同义但不含“报销期限”字样；首轮关键词检索只命中“单据要求”小节，需要模型改写查询或浏览目录。",
   "expect": {
     "status_in": [
-      "conflict_needs_confirmation",
-      "need_clarification"
+      "conflict_needs_confirmation"
     ],
-    "if_status": {
-      "conflict_needs_confirmation": {
-        "cite_docs_all": [
-          "D01",
-          "D02"
-        ],
-        "conflict_docs": [
-          "D01",
-          "D02"
-        ]
-      },
-      "need_clarification": {
-        "question_contains_any": [
-          "D01",
-          "D02",
-          "30",
-          "15",
-          "适用",
-          "哪"
-        ]
-      }
-    },
+    "cite_docs_all": [
+      "D01",
+      "D02"
+    ],
+    "conflict_docs": [
+      "D01",
+      "D02"
+    ],
+    "gaps_nonempty": true,
+    "answer_not_regex": [
+      "(先|暂|暂时|姑且|建议|最好|稳妥|保守|确认前|确认之前)(?:(?!确认|是否|若|如果)[^。\\n]){0,15}(按|以)(?:(?!确认|是否|若|如果)[^。\\n]){0,10}(15|30)\\s*天",
+      "(应|应当|应该|就|直接|一律|统一)以(?:(?!确认|是否|若|如果)[^。\\n]){0,10}(15|30)\\s*天[^。\\n]{0,4}为准"
+    ],
     "mock_known_limitation": "MockLLM 只用问题原文检索一次，不会改写查询"
-  }
+  },
+  "assertion_history": [
+    "v1 允许 need_clarification，且追问时只检查是否含“适用”“哪”等字。外部评审（Codex）指出：零引用、零冲突说明的“请问适用哪份制度？”也能通过；复核旧版真实输出还发现，答案中出现“在确认前，按较严格的 15 天准备提交”这类替用户选边的建议，旧断言未拦截。",
+    "v2 只接受 conflict_needs_confirmation：必须引用 D01 与 D02 原文、冲突描述包含两份文档、gaps 说明查证后仍缺什么，并拦截临时选边建议。",
+    "v3 稳定性复跑中，“请确认：报销提交期限以 D01 的 30 天为准，还是以 D02 的 15 天为准”这类二选一的确认问句被第二条正则误判为选边。改为只匹配“应 / 就 / 直接 / 一律 以……为准”这类陈述；同一批输出重新判定，未重跑模型。"
+  ]
 }

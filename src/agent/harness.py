@@ -66,6 +66,7 @@ class Agent:
     def run(self, question: str, history: list[dict] | None = None) -> dict:
         t0 = time.perf_counter()
         state = RunState(self.max_llm_turns, self.max_tool_calls)
+        state.context_text = _history_block(history) + question
         steps: list[dict] = []
         messages: list[dict] = [
             {"role": "system", "content": SYSTEM_PROMPT},

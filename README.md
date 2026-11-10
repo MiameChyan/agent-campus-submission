@@ -87,12 +87,12 @@ cd frontend && npm install && npm run dev
 ├── scripts/
 │   ├── run_eval.py                   # 批量运行用例并按预期自动判定
 │   └── stability.py                  # 关键用例重复运行
-├── tests/                            # 88 个自动化测试
+├── tests/                            # 98 个自动化测试
 ├── examples/
 │   ├── cases/                        # 11 个用例的输入与预期
 │   ├── live/                         # 真实模型的输出、执行记录与评测报告
 │   │   ├── stability/                # 稳定性复跑
-│   │   └── regression-plugins/       # 扩展改造后的回归评测
+│   │   └── v1-initial/               # 修复前（v1）的运行记录归档
 │   ├── mock/                         # 离线 Mock 的输出与报告
 │   └── test-results.txt              # 自动化测试的实际输出
 └── docs/

@@ -1,0 +1,109 @@
+{
+  "question": "那满 10 年呢？",
+  "status": "answered",
+  "incomplete_reason": null,
+  "mode": "live",
+  "model": "deepseek-flash",
+  "kb": "data/kb",
+  "fault_injection": null,
+  "answer": "满 10 年不满 20 年的，年假 12 天；满 20 年的，年假 15 天。（你目前累计工作满 1 年不满 10 年，对应 7 天。）\n\n依据：D07《年假制度（2025 版）》（版本日期 2025-01-01，现行，适用范围：全体正式员工，替代 D03）第一条 年假天数。\n\n提示：制度中的判定口径是「累计工作」年限，并非本公司司龄；若你此前有其他单位工作经历，可合并计算，具体以人事核定的工龄为准。",
+  "citations": [
+    {
+      "doc_id": "D07",
+      "section_id": "s1",
+      "title": "年假制度（2025 版）",
+      "section_title": "第一条 年假天数",
+      "version_date": "2025-01-01",
+      "doc_status": "现行",
+      "quote": "员工累计工作满 1 年不满 10 年的，年假 7 天；满 10 年不满 20 年的，年假 12 天；满 20 年的，年假 15 天。"
+    }
+  ],
+  "conflicts": [],
+  "gaps": [
+    "制度未说明累计工作年限的认定方式与证明材料细则；如涉及跨单位工龄合并，需向人事确认核定结果。"
+  ],
+  "clarifying_question": null,
+  "stats": {
+    "llm_turns": 4,
+    "tool_calls": 2,
+    "tool_calls_by_name": {
+      "outline": 1,
+      "read_section": 1
+    },
+    "gate_rejections": 0,
+    "budget": {
+      "max_llm_turns": 8,
+      "max_tool_calls": 12
+    },
+    "prompt_tokens": 11618,
+    "completion_tokens": 1200,
+    "elapsed_ms": 9224
+  },
+  "trace": [
+    {
+      "step": 1,
+      "turn": 1,
+      "action": "outline",
+      "args": {
+        "doc_id": "D07"
+      },
+      "reason": "先确认年假制度版本与小节结构，定位对应年限档位",
+      "ok": true,
+      "observation": "D07《年假制度（2025 版）》现行 2025-01-01 范围:全体正式员工 替代 D03 小节 4 个",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 2,
+      "turn": 1,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D07",
+        "section_id": "s1"
+      },
+      "reason": "上一轮引用的是 D07#s1，直接读原文核对满 10 年的规定",
+      "ok": true,
+      "observation": "D07#s1（现行）第一条 年假天数：员工累计工作满 1 年不满 10 年的，年假 7 天；满 10 年不满 20 年的，年假 12 天；…",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "(text_without_tool)"
+    },
+    {
+      "step": 3,
+      "turn": 2,
+      "action": "(text_without_tool)",
+      "args": {},
+      "reason": "",
+      "ok": false,
+      "observation": "模型未调用工具，输出：满 10 年不满 20 年的员工，年假 **12 天**；满 20 年则 **15 天**。\n\n依据：D07《年假制度（2025 版）》（2025-01-01 ",
+      "next_action": "finish"
+    },
+    {
+      "step": 4,
+      "turn": 3,
+      "action": "finish",
+      "args": {
+        "_raw": "{\"status\": \"answered\", \"answer\": \"满 10 年不满 20 年的，年假 12 天；满 20 年的，年假 15 天。（你目前累计工作满 1 年不满 10 年，对应 7 天。）\\n\\n依据：D07《年假制度（2025 版）》（版本 2025-01-01，现行，适用范围：全体正式员工，替代 D03）第一条 年假天数。\\n\\n提示：\\n- 制度中的判定口径是\\\"累计工作\\\""
+      },
+      "reason": "",
+      "ok": false,
+      "observation": "失败 InvalidArguments（不可重试）：参数不是合法 JSON：Expecting ',' delimiter: line 1 column 447 (char 446)",
+      "kind": "error",
+      "next_action": "finish"
+    },
+    {
+      "step": 5,
+      "turn": 4,
+      "action": "finish",
+      "args": {
+        "status": "answered"
+      },
+      "reason": "已读取 D07#s1 原文，给出满 10 年的档位天数并说明现行版本与工龄口径。",
+      "ok": true,
+      "observation": "闸门通过，状态 answered，有效引用 1 条",
+      "kind": "terminal",
+      "next_action": "（结束）"
+    }
+  ]
+}

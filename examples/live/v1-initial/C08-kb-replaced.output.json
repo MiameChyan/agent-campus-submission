@@ -1,0 +1,142 @@
+{
+  "question": "报销期限多久？",
+  "status": "answered",
+  "incomplete_reason": null,
+  "mode": "live",
+  "model": "deepseek-flash",
+  "kb": "data/kb_variants/no_conflict",
+  "fault_injection": null,
+  "answer": "报销期限：**费用发生之日起 30 天内**提交报销申请；逾期提交须由部门负责人书面说明原因。\n\n依据：D01《费用报销制度》（2024-03-01，现行）第三条「报销期限」。\n适用范围：该制度覆盖因公发生的各类费用，含办公用品、业务招待、市内交通及差旅费用（D01 第一条）。\n\n提示：制度中未规定逾期说明的审批时限或超期拒付后果；知识库中也未见针对差旅费的单独更长期限规定。",
+  "citations": [
+    {
+      "doc_id": "D01",
+      "section_id": "s3",
+      "title": "费用报销制度",
+      "section_title": "第三条 报销期限",
+      "version_date": "2024-03-01",
+      "doc_status": "现行",
+      "quote": "员工应在费用发生之日起 30 天内提交报销申请，逾期提交须由部门负责人书面说明原因。"
+    },
+    {
+      "doc_id": "D01",
+      "section_id": "s1",
+      "title": "费用报销制度",
+      "section_title": "第一条 适用范围",
+      "version_date": "2024-03-01",
+      "doc_status": "现行",
+      "quote": "本制度适用于公司员工因公发生的各类费用报销，包括办公用品、业务招待、市内交通及差旅费用。"
+    }
+  ],
+  "conflicts": [],
+  "gaps": [
+    "制度未规定逾期报销除“部门负责人书面说明”外的处理后果（如是否可拒付、是否有绝对截止期）",
+    "未检索到差旅费等特殊费用是否有单独的报销期限规定"
+  ],
+  "clarifying_question": null,
+  "stats": {
+    "llm_turns": 4,
+    "tool_calls": 5,
+    "tool_calls_by_name": {
+      "search": 2,
+      "read_section": 2,
+      "outline": 1
+    },
+    "gate_rejections": 0,
+    "budget": {
+      "max_llm_turns": 8,
+      "max_tool_calls": 12
+    },
+    "prompt_tokens": 13763,
+    "completion_tokens": 939,
+    "elapsed_ms": 8716
+  },
+  "trace": [
+    {
+      "step": 1,
+      "turn": 1,
+      "action": "search",
+      "args": {
+        "query": "报销期限",
+        "top_k": 5
+      },
+      "reason": "直接检索“报销期限”关键词，看是否有明确条款",
+      "ok": true,
+      "observation": "“报销期限” 命中 4 条：D01#s3 第三条 报销期限(现行)；D01#s2 第二条 单据要求(现行)；D01#s1 第一条 适用范围(现行)；D01#s4 第四条 审批流程(现行)",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "search"
+    },
+    {
+      "step": 2,
+      "turn": 1,
+      "action": "search",
+      "args": {
+        "query": "报销 时间 天 内 提交",
+        "top_k": 5
+      },
+      "reason": "换用制度原文可能出现的表述补充检索",
+      "ok": true,
+      "observation": "“报销 时间 天 内 提交” 命中 5 条：D01#s3 第三条 报销期限(现行)；D08#s1 技巧一 快速剪辑(现行)；D01#s2 第二条 单据要求(现行)；D03#s1 第一条 年假天数(已废止)",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 3,
+      "turn": 2,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D01",
+        "section_id": "s3"
+      },
+      "reason": "读取“第三条 报销期限”原文以确认具体天数与例外规则",
+      "ok": true,
+      "observation": "D01#s3（现行）第三条 报销期限：员工应在费用发生之日起 30 天内提交报销申请，逾期提交须由部门负责人书面说明原因。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "outline"
+    },
+    {
+      "step": 4,
+      "turn": 2,
+      "action": "outline",
+      "args": {
+        "doc_id": "D01"
+      },
+      "reason": "查看该制度版本状态与替代关系，确认是否为当前有效版本",
+      "ok": true,
+      "observation": "D01《费用报销制度》现行 2024-03-01 范围:未注明  小节 4 个",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 5,
+      "turn": 3,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D01",
+        "section_id": "s1"
+      },
+      "reason": "确认适用范围，判断是否存在差旅等其他报销类型不受该期限约束",
+      "ok": true,
+      "observation": "D01#s1（现行）第一条 适用范围：本制度适用于公司员工因公发生的各类费用报销，包括办公用品、业务招待、市内交通及差旅费用。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "finish"
+    },
+    {
+      "step": 6,
+      "turn": 4,
+      "action": "finish",
+      "args": {
+        "status": "answered"
+      },
+      "reason": "已从现行版费用报销制度第三条读到明确期限条款，并核实版本与适用范围，可给出确定答案。",
+      "ok": true,
+      "observation": "闸门通过，状态 answered，有效引用 2 条",
+      "kind": "terminal",
+      "next_action": "（结束）"
+    }
+  ]
+}

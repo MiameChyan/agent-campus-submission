@@ -1,0 +1,135 @@
+{
+  "question": "公司的股票期权怎么行权？",
+  "status": "out_of_scope",
+  "incomplete_reason": null,
+  "mode": "live",
+  "model": "deepseek-flash",
+  "kb": "data/kb",
+  "fault_injection": null,
+  "answer": "知识库中没有关于股票期权（及股权激励、行权流程）的任何资料，无法回答该问题。\n\n依据检索范围：\n- 制度目录仅含三类内容：财务（费用报销制度及补充通知）、人事（年假制度、远程办公制度）、行政（办公设备申领规定）。\n- 产品目录仅含“星剪 App”的常见问题与使用说明。\n- 以“股票期权 行权”“股权激励/授予/行权价格”“行权/激励/员工持股/限制性股票”等关键词检索均无相关命中（返回结果均为报销期限、远程办公天数、设备申领等无关小节）。\n\n因此该问题属于资料范围外：请向人力资源部/薪酬与股权激励归口部门，或查阅公司正式的股权激励计划文件（激励计划、授予协议、行权通知）确认，不要依据本助手给出结论。",
+  "citations": [],
+  "conflicts": [],
+  "gaps": [
+    "知识库未收录任何股权激励/股票期权相关制度或问答资料（制度目录仅财务、人事、行政三类；产品目录仅星剪 App）。",
+    "未提供股票期权的授予协议、行权窗口、行权价格、税务处理等任何可引用原文，需向 HR/薪酬股权归口部门或公司正式激励计划文件确认。"
+  ],
+  "clarifying_question": null,
+  "stats": {
+    "llm_turns": 4,
+    "tool_calls": 6,
+    "tool_calls_by_name": {
+      "search": 3,
+      "browse": 3
+    },
+    "gate_rejections": 0,
+    "budget": {
+      "max_llm_turns": 8,
+      "max_tool_calls": 12
+    },
+    "prompt_tokens": 11930,
+    "completion_tokens": 1018,
+    "elapsed_ms": 9550
+  },
+  "trace": [
+    {
+      "step": 1,
+      "turn": 1,
+      "action": "search",
+      "args": {
+        "query": "股票期权 行权",
+        "top_k": 8
+      },
+      "reason": "先检索知识库中与股票期权行权相关的制度文档",
+      "ok": true,
+      "observation": "“股票期权 行权” 无命中",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "browse"
+    },
+    {
+      "step": 2,
+      "turn": 1,
+      "action": "browse",
+      "args": {
+        "path": ""
+      },
+      "reason": "同时查看知识库目录结构，判断股票期权类资料是否存在及其位置",
+      "ok": true,
+      "observation": "目录 /：子目录 产品、制度；文档 无",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "browse"
+    },
+    {
+      "step": 3,
+      "turn": 2,
+      "action": "browse",
+      "args": {
+        "path": "制度"
+      },
+      "reason": "查看制度目录下有哪些文档，确认是否包含股权激励/期权类制度",
+      "ok": true,
+      "observation": "目录 制度：子目录 制度/人事、制度/行政、制度/财务；文档 无",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "search"
+    },
+    {
+      "step": 4,
+      "turn": 2,
+      "action": "search",
+      "args": {
+        "query": "股权激励 期权 授予 行权价格",
+        "top_k": 8
+      },
+      "reason": "换用股权激励相关原文词再检索一次",
+      "ok": true,
+      "observation": "“股权激励 期权 授予 行权价格” 无命中",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "browse"
+    },
+    {
+      "step": 5,
+      "turn": 3,
+      "action": "browse",
+      "args": {
+        "path": "产品"
+      },
+      "reason": "确认产品目录下是否有期权相关内容",
+      "ok": true,
+      "observation": "目录 产品：子目录 产品/星剪App；文档 无",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "search"
+    },
+    {
+      "step": 6,
+      "turn": 3,
+      "action": "search",
+      "args": {
+        "query": "行权 激励 员工持股 限制性股票",
+        "top_k": 8
+      },
+      "reason": "再用行权、激励等关键词做最后一次检索确认",
+      "ok": true,
+      "observation": "“行权 激励 员工持股 限制性股票” 命中 8 条：D05#s1 第一条 适用人员(现行)；D02#s1 一、提交期限(现行)；D05#s2 第二条 远程办公天数(现行)；D06#s1 第一条 申领流程(现行)",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "finish"
+    },
+    {
+      "step": 7,
+      "turn": 4,
+      "action": "finish",
+      "args": {
+        "status": "out_of_scope"
+      },
+      "reason": "三次不同关键词检索与两级目录浏览均未发现股票期权相关资料，属资料范围外，明确告知用户而不以常识补全。",
+      "ok": true,
+      "observation": "闸门通过，状态 out_of_scope，有效引用 0 条",
+      "kind": "terminal",
+      "next_action": "（结束）"
+    }
+  ]
+}

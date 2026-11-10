@@ -12,10 +12,14 @@
   conclusion_contains_any 结论（answer 第一行）至少包含其中一个
   conclusion_not_contains 结论（answer 第一行）不能包含其中任何一个（答案后文可以引述/警示，如注入文本）
   tool_used               这些工具至少被调用过一次
+  gaps_nonempty           gaps 不能为空（冲突时要说明查证后还缺什么）
+  answer_not_regex        answer 不能匹配其中任何一个正则（如“确认前先按 15 天执行”这类临时选边建议）
   if_status               {状态: {子检查}}，仅当实际状态匹配时执行
   mock_known_limitation   说明字段：Mock 模式下预期无法通过的原因（不参与判定）
 """
 from __future__ import annotations
+
+import re
 
 
 def check_expect(expect: dict, result: dict) -> list[dict]:
@@ -58,6 +62,12 @@ def check_expect(expect: dict, result: dict) -> list[dict]:
                 add(name, not hit, f"结论「{conclusion}」不得包含 {val}")
             elif key == "question_contains_any":
                 add(name, any(v in question for v in val), f"追问需包含其一 {val}")
+            elif key == "gaps_nonempty":
+                gaps = [g for g in (result.get("gaps") or []) if str(g).strip()]
+                add(name, bool(gaps) == bool(val), f"gaps 共 {len(gaps)} 条")
+            elif key == "answer_not_regex":
+                hit = [m.group(0) for pat in val for m in [re.search(pat, answer)] if m]
+                add(name, not hit, "answer 不得出现临时选边等表述" + (f"，实际出现 {hit}" if hit else ""))
             elif key == "tool_used":
                 add(name, set(val) <= used, f"调用过 {sorted(used)}，需包含 {val}")
             elif key == "if_status":

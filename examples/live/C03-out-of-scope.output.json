@@ -5,30 +5,31 @@
   "mode": "live",
   "model": "deepseek-flash",
   "kb": "data/kb",
+  "retriever": "bm25",
   "fault_injection": null,
-  "answer": "知识库中没有关于股票期权（及股权激励、行权流程）的任何资料，无法回答该问题。\n\n依据检索范围：\n- 制度目录仅含三类内容：财务（费用报销制度及补充通知）、人事（年假制度、远程办公制度）、行政（办公设备申领规定）。\n- 产品目录仅含“星剪 App”的常见问题与使用说明。\n- 以“股票期权 行权”“股权激励/授予/行权价格”“行权/激励/员工持股/限制性股票”等关键词检索均无相关命中（返回结果均为报销期限、远程办公天数、设备申领等无关小节）。\n\n因此该问题属于资料范围外：请向人力资源部/薪酬与股权激励归口部门，或查阅公司正式的股权激励计划文件（激励计划、授予协议、行权通知）确认，不要依据本助手给出结论。",
+  "answer": "知识库中没有股票期权行权相关的资料，无法给出答案。\n\n**已核查的范围**（本次检索方式：关键词 search×2 + 逐目录 browse）：\n- 关键词「股票期权 行权」「期权」检索：均无命中。\n- 目录浏览结果：知识库只包含以下文档\n  - 制度/财务：D01《费用报销制度》（现行）、D02《报销管理补充通知》（现行）\n  - 制度/人事：D03《年假制度（2023 版）》（已废止）、D07《年假制度（2025 版）》（现行）、D05《远程办公制度》（现行）\n  - 制度/行政：D06《办公设备申领规定》（现行）\n  - 产品：星剪 App（会员权益、导出、字幕等使用问题）\n\n以上均不涉及股权激励、期权授予或行权。为避免用常识补全，我不对行权流程、行权窗口、行权价格、税务处理等做任何推测。\n\n**建议的下一步**：股票期权一般由董事会/薪酬或 HR 专项文件、以及期权授予协议（grant letter）规定，不在这套制度库范围内。请向 HR/C&B 或财务确认是否有单独的《股权激励计划》文本；若提供该文档给我，我可以基于原文作答。",
   "citations": [],
   "conflicts": [],
   "gaps": [
-    "知识库未收录任何股权激励/股票期权相关制度或问答资料（制度目录仅财务、人事、行政三类；产品目录仅星剪 App）。",
-    "未提供股票期权的授予协议、行权窗口、行权价格、税务处理等任何可引用原文，需向 HR/薪酬股权归口部门或公司正式激励计划文件确认。"
+    "知识库检索与目录遍历均未发现股权激励/股票期权相关文档，无法回答行权流程、行权条件、窗口期与税务处理等问题",
+    "若公司确有针对期权的专项制度或授予协议，需要用户提供文档或告知名称后再查"
   ],
   "clarifying_question": null,
   "stats": {
-    "llm_turns": 4,
-    "tool_calls": 6,
+    "llm_turns": 5,
+    "tool_calls": 8,
     "tool_calls_by_name": {
-      "search": 3,
-      "browse": 3
+      "search": 2,
+      "browse": 6
     },
     "gate_rejections": 0,
     "budget": {
       "max_llm_turns": 8,
       "max_tool_calls": 12
     },
-    "prompt_tokens": 11930,
-    "completion_tokens": 1018,
-    "elapsed_ms": 9550
+    "prompt_tokens": 16751,
+    "completion_tokens": 1451,
+    "elapsed_ms": 12966
   },
   "trace": [
     {
@@ -39,7 +40,7 @@
         "query": "股票期权 行权",
         "top_k": 8
       },
-      "reason": "先检索知识库中与股票期权行权相关的制度文档",
+      "reason": "用户问股票期权行权，先用制度原文可能出现的词检索",
       "ok": true,
       "observation": "“股票期权 行权” 无命中",
       "kind": "business",
@@ -53,7 +54,7 @@
       "args": {
         "path": ""
       },
-      "reason": "同时查看知识库目录结构，判断股票期权类资料是否存在及其位置",
+      "reason": "同时查看知识库目录，确认是否存在股权激励类制度",
       "ok": true,
       "observation": "目录 /：子目录 产品、制度；文档 无",
       "kind": "business",
@@ -67,65 +68,92 @@
       "args": {
         "path": "制度"
       },
-      "reason": "查看制度目录下有哪些文档，确认是否包含股权激励/期权类制度",
+      "reason": "检索无命中，改为浏览制度目录确认是否有股权激励类文档",
       "ok": true,
       "observation": "目录 制度：子目录 制度/人事、制度/行政、制度/财务；文档 无",
-      "kind": "business",
-      "elapsed_ms": 0,
-      "next_action": "search"
-    },
-    {
-      "step": 4,
-      "turn": 2,
-      "action": "search",
-      "args": {
-        "query": "股权激励 期权 授予 行权价格",
-        "top_k": 8
-      },
-      "reason": "换用股权激励相关原文词再检索一次",
-      "ok": true,
-      "observation": "“股权激励 期权 授予 行权价格” 无命中",
       "kind": "business",
       "elapsed_ms": 0,
       "next_action": "browse"
     },
     {
-      "step": 5,
-      "turn": 3,
+      "step": 4,
+      "turn": 2,
       "action": "browse",
       "args": {
-        "path": "产品"
+        "path": "制度/人事"
       },
-      "reason": "确认产品目录下是否有期权相关内容",
+      "reason": "股权激励/期权通常归入人事制度，优先查看人事目录",
       "ok": true,
-      "observation": "目录 产品：子目录 产品/星剪App；文档 无",
+      "observation": "目录 制度/人事：子目录 无；文档 D03(已废止)、D05(现行)、D07(现行)",
       "kind": "business",
       "elapsed_ms": 0,
       "next_action": "search"
     },
     {
-      "step": 6,
+      "step": 5,
       "turn": 3,
       "action": "search",
       "args": {
-        "query": "行权 激励 员工持股 限制性股票",
+        "query": "期权",
         "top_k": 8
       },
-      "reason": "再用行权、激励等关键词做最后一次检索确认",
+      "reason": "换用更短的关键词“期权”再检索一次，确认知识库确实无相关内容",
       "ok": true,
-      "observation": "“行权 激励 员工持股 限制性股票” 命中 8 条：D05#s1 第一条 适用人员(现行)；D02#s1 一、提交期限(现行)；D05#s2 第二条 远程办公天数(现行)；D06#s1 第一条 申领流程(现行)",
+      "observation": "“期权” 无命中",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "browse"
+    },
+    {
+      "step": 6,
+      "turn": 3,
+      "action": "browse",
+      "args": {
+        "path": "制度/财务"
+      },
+      "reason": "确认财务目录仅为报销类制度，排除股权激励可能挂在此处",
+      "ok": true,
+      "observation": "目录 制度/财务：子目录 无；文档 D01(现行)、D02(现行)",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "browse"
+    },
+    {
+      "step": 7,
+      "turn": 4,
+      "action": "browse",
+      "args": {
+        "path": "制度/行政"
+      },
+      "reason": "最后确认行政目录仅有设备申领类制度",
+      "ok": true,
+      "observation": "目录 制度/行政：子目录 无；文档 D06(现行)",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "browse"
+    },
+    {
+      "step": 8,
+      "turn": 4,
+      "action": "browse",
+      "args": {
+        "path": "产品"
+      },
+      "reason": "确认产品目录仅为星剪App资料，不含股权类内容",
+      "ok": true,
+      "observation": "目录 产品：子目录 产品/星剪App；文档 无",
       "kind": "business",
       "elapsed_ms": 0,
       "next_action": "finish"
     },
     {
-      "step": 7,
-      "turn": 4,
+      "step": 9,
+      "turn": 5,
       "action": "finish",
       "args": {
         "status": "out_of_scope"
       },
-      "reason": "三次不同关键词检索与两级目录浏览均未发现股票期权相关资料，属资料范围外，明确告知用户而不以常识补全。",
+      "reason": "两次关键词检索无命中，且逐目录浏览已确认知识库仅含报销、年假、远程办公、设备申领与星剪App内容，属资料范围外",
       "ok": true,
       "observation": "闸门通过，状态 out_of_scope，有效引用 0 条",
       "kind": "terminal",
