@@ -3,8 +3,8 @@ Environment: Python 3.12.7 / Windows-11-10.0.26200-SP0
 Date: 2026-11-10 21:05
 
 ============================= test session starts =============================
-platform win32 -- Python 3.12.7, pytest-7.4.4, pluggy-1.0.0 -- C:\Users\Shenmingyu\anaconda3\python.exe
-rootdir: D:\RAG-ai-code\agent-СӰ\agent-campus-submission
+platform win32 -- Python 3.12.7, pytest-7.4.4, pluggy-1.0.0 -- python
+rootdir: agent-campus-submission
 configfile: pytest.ini
 testpaths: tests
 plugins: anyio-4.14.2, langsmith-0.10.5

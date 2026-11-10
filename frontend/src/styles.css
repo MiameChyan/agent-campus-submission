@@ -1,4 +1,4 @@
-/* 设计 token 参考 TRPGMind；跟随系统亮/暗色 */
+/* 设计 token：浅色 / 深色两套，跟随系统设置 */
 :root {
   --bg: #f7f8fa;
   --surface: #ffffff;
