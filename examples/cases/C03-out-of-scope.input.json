@@ -1,0 +1,21 @@
+{
+  "question": "公司的股票期权怎么行权？",
+  "acceptance": [
+    "资料外问题"
+  ],
+  "expect": {
+    "status_in": [
+      "out_of_scope"
+    ],
+    "cite_docs_none": [
+      "D01",
+      "D02",
+      "D03",
+      "D04",
+      "D05",
+      "D06",
+      "D07",
+      "D08"
+    ]
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "question": "报销期限多久？",
+  "status": "conflict_needs_confirmation",
+  "incomplete_reason": null,
+  "mode": "offline_mock",
+  "model": "mock-policy",
+  "kb": "data/kb",
+  "fault_injection": null,
+  "answer": "资料存在冲突：D01 与 D02 的规定不一致，请确认适用哪份制度。",
+  "citations": [
+    {
+      "doc_id": "D01",
+      "section_id": "s3",
+      "title": "费用报销制度",
+      "section_title": "第三条 报销期限",
+      "version_date": "2024-03-01",
+      "doc_status": "现行",
+      "quote": "员工应在费用发生之日起 30 天内提交报销申请，逾期提交须由部门负责人书面说明原因"
+    },
+    {
+      "doc_id": "D02",
+      "section_id": "s1",
+      "title": "报销管理补充通知",
+      "section_title": "一、提交期限",
+      "version_date": "2025-01-10",
+      "doc_status": "现行",
+      "quote": "为加快财务结算，员工报销申请应在费用发生后 15 天内提交"
+    }
+  ],
+  "conflicts": [
+    {
+      "description": "两份现行文档给出的天数不同",
+      "doc_ids": [
+        "D01",
+        "D02"
+      ]
+    }
+  ],
+  "gaps": [
+    "未找到两份文档的优先级或适用范围说明"
+  ],
+  "clarifying_question": null,
+  "stats": {
+    "llm_turns": 3,
+    "tool_calls": 3,
+    "tool_calls_by_name": {
+      "search": 1,
+      "read_section": 2
+    },
+    "gate_rejections": 0,
+    "budget": {
+      "max_llm_turns": 8,
+      "max_tool_calls": 12
+    },
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "elapsed_ms": 0
+  },
+  "trace": [
+    {
+      "step": 1,
+      "turn": 1,
+      "action": "search",
+      "args": {
+        "query": "报销期限多久？",
+        "top_k": 5
+      },
+      "reason": "[mock] 先用问题原文检索",
+      "ok": true,
+      "observation": "“报销期限多久？” 命中 5 条：D01#s3 第三条 报销期限(现行)；D02#s1 一、提交期限(现行)；D02#s2 二、电子发票(现行)；D01#s2 第二条 单据要求(现行)",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 2,
+      "turn": 2,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D01",
+        "section_id": "s3"
+      },
+      "reason": "[mock] 读取高分命中的原文",
+      "ok": true,
+      "observation": "D01#s3（现行）第三条 报销期限：员工应在费用发生之日起 30 天内提交报销申请，逾期提交须由部门负责人书面说明原因。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 3,
+      "turn": 2,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D02",
+        "section_id": "s1"
+      },
+      "reason": "[mock] 读取高分命中的原文",
+      "ok": true,
+      "observation": "D02#s1（现行）一、提交期限：为加快财务结算，员工报销申请应在费用发生后 15 天内提交。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "finish"
+    },
+    {
+      "step": 4,
+      "turn": 3,
+      "action": "finish",
+      "args": {
+        "status": "conflict_needs_confirmation"
+      },
+      "reason": "[mock] 两份现行文档数值不同，列出冲突",
+      "ok": true,
+      "observation": "闸门通过，状态 conflict_needs_confirmation，有效引用 2 条",
+      "kind": "terminal",
+      "next_action": "（结束）"
+    }
+  ]
+}

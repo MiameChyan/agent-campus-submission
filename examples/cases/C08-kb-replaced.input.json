@@ -1,0 +1,23 @@
+{
+  "question": "报销期限多久？",
+  "options": {
+    "kb": "no_conflict"
+  },
+  "acceptance": [
+    "替换文档内容（审核要点）",
+    "明确答案"
+  ],
+  "note": "与 C02 同一问题，知识库换成移除 D02 的变体：答案与动作应随之改变。",
+  "expect": {
+    "status_in": [
+      "answered"
+    ],
+    "cite_docs_all": [
+      "D01"
+    ],
+    "answer_contains_any": [
+      "30 天",
+      "30天"
+    ]
+  }
+}

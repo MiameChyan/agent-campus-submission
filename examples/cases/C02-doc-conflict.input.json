@@ -1,0 +1,34 @@
+{
+  "question": "报销期限多久？",
+  "acceptance": [
+    "文档冲突"
+  ],
+  "expect": {
+    "status_in": [
+      "conflict_needs_confirmation",
+      "need_clarification"
+    ],
+    "if_status": {
+      "conflict_needs_confirmation": {
+        "cite_docs_all": [
+          "D01",
+          "D02"
+        ],
+        "conflict_docs": [
+          "D01",
+          "D02"
+        ]
+      },
+      "need_clarification": {
+        "question_contains_any": [
+          "D01",
+          "D02",
+          "30",
+          "15",
+          "适用",
+          "哪"
+        ]
+      }
+    }
+  }
+}

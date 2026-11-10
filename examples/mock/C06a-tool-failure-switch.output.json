@@ -1,0 +1,76 @@
+{
+  "question": "我每周可以远程办公几天？",
+  "status": "tool_error",
+  "incomplete_reason": null,
+  "mode": "offline_mock",
+  "model": "mock-policy",
+  "kb": "data/kb",
+  "fault_injection": "search:always",
+  "answer": "检索服务连续失败，暂时无法回答该问题，请稍后重试。",
+  "citations": [],
+  "conflicts": [],
+  "gaps": [
+    "search 工具连续两次失败"
+  ],
+  "clarifying_question": null,
+  "stats": {
+    "llm_turns": 3,
+    "tool_calls": 2,
+    "tool_calls_by_name": {
+      "search": 2
+    },
+    "gate_rejections": 0,
+    "budget": {
+      "max_llm_turns": 8,
+      "max_tool_calls": 12
+    },
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "elapsed_ms": 0
+  },
+  "trace": [
+    {
+      "step": 1,
+      "turn": 1,
+      "action": "search",
+      "args": {
+        "query": "我每周可以远程办公几天？",
+        "top_k": 5
+      },
+      "reason": "[mock] 先用问题原文检索",
+      "ok": false,
+      "observation": "失败 ServiceUnavailable（可重试）：search 服务暂时不可用（注入故障，第 1 次调用）",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "search"
+    },
+    {
+      "step": 2,
+      "turn": 2,
+      "action": "search",
+      "args": {
+        "query": "我每周可以远程办公几天？",
+        "top_k": 5
+      },
+      "reason": "[mock] 检索失败一次，按建议重试",
+      "ok": false,
+      "observation": "失败 ServiceUnavailable（可重试）：search 服务暂时不可用（注入故障，第 2 次调用）",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "finish"
+    },
+    {
+      "step": 3,
+      "turn": 3,
+      "action": "finish",
+      "args": {
+        "status": "tool_error"
+      },
+      "reason": "[mock] 检索连续失败两次，停止并报告",
+      "ok": true,
+      "observation": "闸门通过，状态 tool_error，有效引用 0 条",
+      "kind": "terminal",
+      "next_action": "（结束）"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "question": "我每周可以远程办公几天？",
+  "options": {
+    "fail": "search:always,browse:always,outline:always,read_section:always"
+  },
+  "acceptance": [
+    "工具失败"
+  ],
+  "note": "所有知识库工具都失败：应明确返回 tool_error，不能编造答案。",
+  "expect": {
+    "status_in": [
+      "tool_error"
+    ],
+    "cite_docs_none": [
+      "D05"
+    ]
+  }
+}

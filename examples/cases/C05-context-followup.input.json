@@ -1,0 +1,31 @@
+{
+  "question": "那满 10 年呢？",
+  "history": [
+    {
+      "question": "我入职 3 年了，年假有几天？",
+      "answer": "按现行《年假制度（2025 版）》，累计工作满 1 年不满 10 年的员工年假 7 天。",
+      "citations": [
+        {
+          "doc_id": "D07",
+          "section_id": "s1"
+        }
+      ]
+    }
+  ],
+  "acceptance": [
+    "上下文追问"
+  ],
+  "expect": {
+    "status_in": [
+      "answered"
+    ],
+    "cite_docs_all": [
+      "D07"
+    ],
+    "answer_contains_any": [
+      "12 天",
+      "12天"
+    ],
+    "mock_known_limitation": "MockLLM 不读取对话历史，无法理解指代"
+  }
+}

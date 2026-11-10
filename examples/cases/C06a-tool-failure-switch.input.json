@@ -1,0 +1,22 @@
+{
+  "question": "我每周可以远程办公几天？",
+  "options": {
+    "fail": "search:always"
+  },
+  "acceptance": [
+    "工具失败"
+  ],
+  "note": "search 始终失败，其余工具正常：观察模型是否改用 browse/outline 目录导航完成任务。",
+  "expect": {
+    "status_in": [
+      "answered"
+    ],
+    "cite_docs_all": [
+      "D05"
+    ],
+    "tool_used": [
+      "browse"
+    ],
+    "mock_known_limitation": "MockLLM 只会重试 search，不会改用 browse"
+  }
+}

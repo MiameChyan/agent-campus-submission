@@ -1,0 +1,36 @@
+{
+  "question": "发票最晚多少天内要交上去？",
+  "acceptance": [
+    "改写后的相似问题"
+  ],
+  "note": "与 C02 同义但不含“报销期限”字样；首轮关键词检索只命中“单据要求”小节，需要模型改写查询或浏览目录。",
+  "expect": {
+    "status_in": [
+      "conflict_needs_confirmation",
+      "need_clarification"
+    ],
+    "if_status": {
+      "conflict_needs_confirmation": {
+        "cite_docs_all": [
+          "D01",
+          "D02"
+        ],
+        "conflict_docs": [
+          "D01",
+          "D02"
+        ]
+      },
+      "need_clarification": {
+        "question_contains_any": [
+          "D01",
+          "D02",
+          "30",
+          "15",
+          "适用",
+          "哪"
+        ]
+      }
+    },
+    "mock_known_limitation": "MockLLM 只用问题原文检索一次，不会改写查询"
+  }
+}

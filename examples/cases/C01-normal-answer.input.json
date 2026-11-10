@@ -1,0 +1,19 @@
+{
+  "question": "我每周可以远程办公几天？",
+  "acceptance": [
+    "明确答案"
+  ],
+  "expect": {
+    "status_in": [
+      "answered"
+    ],
+    "cite_docs_all": [
+      "D05"
+    ],
+    "answer_contains_any": [
+      "2 天",
+      "2天",
+      "两天"
+    ]
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "question": "发票最晚多少天内要交上去？",
+  "status": "answered",
+  "incomplete_reason": null,
+  "mode": "offline_mock",
+  "model": "mock-policy",
+  "kb": "data/kb",
+  "fault_injection": null,
+  "answer": "报销须提供合规发票或电子发票，发票抬头为公司全称，金额与实际支出一致。",
+  "citations": [
+    {
+      "doc_id": "D01",
+      "section_id": "s2",
+      "title": "费用报销制度",
+      "section_title": "第二条 单据要求",
+      "version_date": "2024-03-01",
+      "doc_status": "现行",
+      "quote": "报销须提供合规发票或电子发票，发票抬头为公司全称，金额与实际支出一致"
+    }
+  ],
+  "conflicts": [],
+  "gaps": [],
+  "clarifying_question": null,
+  "stats": {
+    "llm_turns": 3,
+    "tool_calls": 3,
+    "tool_calls_by_name": {
+      "search": 1,
+      "read_section": 2
+    },
+    "gate_rejections": 0,
+    "budget": {
+      "max_llm_turns": 8,
+      "max_tool_calls": 12
+    },
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "elapsed_ms": 0
+  },
+  "trace": [
+    {
+      "step": 1,
+      "turn": 1,
+      "action": "search",
+      "args": {
+        "query": "发票最晚多少天内要交上去？",
+        "top_k": 5
+      },
+      "reason": "[mock] 先用问题原文检索",
+      "ok": true,
+      "observation": "“发票最晚多少天内要交上去？” 命中 2 条：D01#s2 第二条 单据要求(现行)；D02#s2 二、电子发票(现行)",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 2,
+      "turn": 2,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D01",
+        "section_id": "s2"
+      },
+      "reason": "[mock] 读取高分命中的原文",
+      "ok": true,
+      "observation": "D01#s2（现行）第二条 单据要求：报销须提供合规发票或电子发票，发票抬头为公司全称，金额与实际支出一致；无发票的支出不予报销。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 3,
+      "turn": 2,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D02",
+        "section_id": "s2"
+      },
+      "reason": "[mock] 读取高分命中的原文",
+      "ok": true,
+      "observation": "D02#s2（现行）二、电子发票：自本通知发布之日起，优先使用电子发票报销；纸质发票须在背面注明报销人姓名。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "finish"
+    },
+    {
+      "step": 4,
+      "turn": 3,
+      "action": "finish",
+      "args": {
+        "status": "answered"
+      },
+      "reason": "[mock] 依据已读原文回答",
+      "ok": true,
+      "observation": "闸门通过，状态 answered，有效引用 1 条",
+      "kind": "terminal",
+      "next_action": "（结束）"
+    }
+  ]
+}

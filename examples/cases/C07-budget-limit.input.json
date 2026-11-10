@@ -1,0 +1,15 @@
+{
+  "question": "报销期限多久？",
+  "options": {
+    "max_llm_turns": 1
+  },
+  "acceptance": [
+    "执行上限"
+  ],
+  "expect": {
+    "status_in": [
+      "incomplete"
+    ],
+    "incomplete_reason": "llm_turns_exhausted"
+  }
+}

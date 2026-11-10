@@ -1,0 +1,85 @@
+{
+  "question": "我每周可以远程办公几天？",
+  "status": "answered",
+  "incomplete_reason": null,
+  "mode": "offline_mock",
+  "model": "mock-policy",
+  "kb": "data/kb",
+  "fault_injection": null,
+  "answer": "经部门负责人批准，员工每周最多可远程办公 2 天。",
+  "citations": [
+    {
+      "doc_id": "D05",
+      "section_id": "s2",
+      "title": "远程办公制度",
+      "section_title": "第二条 远程办公天数",
+      "version_date": "2024-06-01",
+      "doc_status": "现行",
+      "quote": "经部门负责人批准，员工每周最多可远程办公 2 天"
+    }
+  ],
+  "conflicts": [],
+  "gaps": [],
+  "clarifying_question": null,
+  "stats": {
+    "llm_turns": 3,
+    "tool_calls": 2,
+    "tool_calls_by_name": {
+      "search": 1,
+      "read_section": 1
+    },
+    "gate_rejections": 0,
+    "budget": {
+      "max_llm_turns": 8,
+      "max_tool_calls": 12
+    },
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "elapsed_ms": 0
+  },
+  "trace": [
+    {
+      "step": 1,
+      "turn": 1,
+      "action": "search",
+      "args": {
+        "query": "我每周可以远程办公几天？",
+        "top_k": 5
+      },
+      "reason": "[mock] 先用问题原文检索",
+      "ok": true,
+      "observation": "“我每周可以远程办公几天？” 命中 5 条：D05#s2 第二条 远程办公天数(现行)；D05#s3 第三条 申请流程(现行)；D05#s1 第一条 适用人员(现行)；D08#s1 技巧一 快速剪辑(现行)",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 2,
+      "turn": 2,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D05",
+        "section_id": "s2"
+      },
+      "reason": "[mock] 读取高分命中的原文",
+      "ok": true,
+      "observation": "D05#s2（现行）第二条 远程办公天数：经部门负责人批准，员工每周最多可远程办公 2 天。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "finish"
+    },
+    {
+      "step": 3,
+      "turn": 3,
+      "action": "finish",
+      "args": {
+        "status": "answered"
+      },
+      "reason": "[mock] 依据已读原文回答",
+      "ok": true,
+      "observation": "闸门通过，状态 answered，有效引用 1 条",
+      "kind": "terminal",
+      "next_action": "（结束）"
+    }
+  ]
+}
