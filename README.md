@@ -49,14 +49,16 @@ cd frontend && npm install && npm run dev              # 前端 http://localhost
 
 | 检查项 | 入口 |
 |---|---|
-| 需求、范围、成功标准 | [docs/01-requirements.md](docs/01-requirements.md) |
-| 调用流程、动态决策、技术取舍（含放弃向量检索的原因） | [docs/02-solution.md](docs/02-solution.md) |
-| 测试预期、实际结果、失败与限制 | [docs/03-evaluation.md](docs/03-evaluation.md) |
-| AI 辅助范围、个人修改与验证 | [docs/04-ai-usage.md](docs/04-ai-usage.md) |
-| 最难问题、收获、下一步 | [docs/05-retrospective.md](docs/05-retrospective.md) |
-| 真实模型运行记录（输出 + trace） | [examples/live/](examples/live/report.md) |
-| 离线 Mock 运行记录（只证明流程） | [examples/mock/](examples/mock/report.md) |
-| 用例输入与预期 | [examples/cases/](examples/cases/) |
+| 需求、范围、成功标准 | [需求说明](docs/01-requirements.md) |
+| 调用流程、动态决策、技术取舍（含放弃向量检索的原因） | [方案设计](docs/02-solution.md) |
+| 测试预期、实际结果、失败与限制 | [测试与评估](docs/03-evaluation.md) |
+| AI 辅助范围、个人修改与验证 | [AI 使用说明](docs/04-ai-usage.md) |
+| 最难问题、收获、下一步 | [复盘](docs/05-retrospective.md) |
+| 真实模型运行记录（输出 + trace） | [真实模型评测报告](examples/live/report.md) |
+| 关键用例稳定性复跑 | [稳定性复跑报告](examples/live/stability/report.md) |
+| 离线 Mock 运行记录（只证明流程） | [Mock 评测报告](examples/mock/report.md) |
+| 用例输入与预期 | [用例目录](examples/cases/) |
+| 自动化测试实际输出 | [测试记录](examples/test-results.txt) |
 
 ### 6 个验收点对应的用例
 
@@ -124,4 +126,4 @@ abstract: 一句话摘要（L0）
 - 题号：第 3 题 企业知识问答 Agent
 - 知识库全部为合成数据，“星剪 App”是虚构产品；仓库中不含真实密钥。
 - Mock 模式只证明流程可运行，不代表真实模型的决策效果。真实模型效果以 `examples/live/` 为准。
-- 实际用时与未完成部分见 [docs/05-retrospective.md](docs/05-retrospective.md)。
+- 实际用时与未完成部分见 [复盘](docs/05-retrospective.md)。
