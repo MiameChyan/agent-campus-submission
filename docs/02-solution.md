@@ -1,22 +1,79 @@
-# 方案
+# 02 方案设计
+
+## 调用流程
+
 ```mermaid
-flowchart LR
-  A[读取 JSON] --> B{字段有效?}
-  B -->|缺失| C[返回 needs_input]
-  B -->|有效| D[本地素材检索]
-  D -->|失败| E[返回 tool_error]
-  D -->|无结果| F[返回 insufficient_evidence]
-  D -->|命中| G[确定性模板与时长估算]
-  G --> H[输出 JSON 与 trace]
+flowchart TD
+  Q[问题 + 对话历史] --> C[组装上下文<br/>system + 历史 + 问题]
+  C --> SB[追加状态栏（临时，不写入历史）<br/>预算 / 计划 / 证据台账 / 最近错误 / 闸门反馈]
+  SB --> M{DeepSeek 选择动作<br/>可并行多个工具调用}
+  M -->|search / browse / outline / read_section| T[执行业务工具<br/>故障注入 · 错误分类 · 重复调用提示]
+  M -->|update_plan| P[更新计划]
+  M -->|ask_user| U[need_clarification]
+  M -->|finish| G{提交闸门<br/>引用是否来自已读原文且逐字存在}
+  M -->|只输出文本| N[提醒用工具结束，不采纳]
+  T --> O[观察写回上下文 · 更新证据台账 · 记录 trace]
+  P --> O
+  N --> B
+  O --> B{预算还有?}
+  G -->|通过| R[输出结果 JSON + trace]
+  G -->|不通过：原因退回给模型| B
+  B -->|是| SB
+  B -->|否| I[incomplete（附已收集证据）]
 ```
 
-| 模块 | 实现 |
-|---|---|
-| CLI | src/main.py:main |
-| 工作流 | src/main.py:run |
-| 知识 | data/materials.json |
-| 状态 | needs_input / tool_error / insufficient_evidence / duration_exceeded / completed |
+### 一个真实例子（C02，`examples/live/C02-doc-conflict.trace.md`）
 
-选择标准库是为了让评审无需密钥和依赖即可复现。未使用多 Agent、向量库或记忆，因为本演示不需要它们。
-真实候选人应按题目接入模型生成、检查器和必要工具；固定模板不能代替真实生成能力的证据。
-时长按每秒四个字符粗估，仅用于演示边界检查，不是语音时长测量。
+`search("报销期限")` 命中 D01 和 D02 → 模型并行调用 `outline(D01)`、`outline(D02)`，查看两份文档的状态、范围和替代关系（都是现行、范围未注明、互不替代）→ 读取 D01#s3（30 天）、D02#s1（15 天）、D01#s1（适用范围）→ 再浏览目录，确认没有其他说明 → `finish(conflict_needs_confirmation)`。对照 C08（换成去掉 D02 的知识库），同一个问题读到 D01 后直接 `answered`：30 天。**两条路径的差别，完全来自工具返回的内容不同。**
+
+## 动态决策：哪些由模型决定，哪些由代码负责
+
+| 由模型决定（在 trace 的 reason 字段中可见） | 由代码负责（不做业务判断） |
+|---|---|
+| 用什么关键词检索；结果不好时改写查询还是改用目录浏览 | 执行工具；把异常转成带 `retryable` 和 `suggestion` 的观察结果 |
+| 读哪几个小节；是否用 `outline` 查证版本、范围、替代关系 | 预算：最多 8 轮模型调用、12 次业务工具调用（可配置） |
+| 判断冲突能否查证：回答 / 列出冲突 / 追问 | 提交闸门：校验引用真实性，不判断答案对错 |
+| 工具失败后：重试、换工具还是停止 | 状态栏渲染、重复调用提示、trace 记录 |
+| 何时结束、以什么状态结束 | 达到上限时返回 `incomplete` |
+
+代码里**没有**“检索到两份文档就判冲突”“失败就重试”这类业务分支：工具失败后代码不自动重试，`finish` 的状态完全由模型选择。闸门只检查证据是否成立。
+
+## 关键设计（来源：《深入理解 AI Agent》）
+
+| 设计 | 作用 | 来源 |
+|---|---|---|
+| **状态栏**：每轮调用模型前，把预算、计划、证据台账（已读小节的版本、状态、范围、替代关系）、最近错误作为临时 user 消息追加在末尾 | 让模型随时看到“我已经知道什么、还剩多少预算”，减少重复调用和死循环；不写入历史，因此不会随轮数累积 | 第 2 章 system-hint |
+| **检索工具化 + 多轮迭代** | 检索由模型主动调用，不是固定的前置步骤，可以改写查询、补充检索 | 第 3 章 Agentic RAG |
+| **层次型知识库（文件系统范式）**：目录（L0 摘要）→ 文档大纲（L1 元数据）→ 小节原文（L2） | 关键词检索失效（改写问题、检索故障）时，可以按目录导航；版本和替代关系是一等公民 | 第 3 章 文件系统范式 / OpenViking |
+| **路径前缀索引**：每个小节以 “目录 文档ID 标题 小节标题” 作为前缀参与 BM25 | 正文没有出现的上下文（如“人事”）也能被检索到 | 第 3 章 上下文感知检索（无 LLM 的轻量版） |
+| **指令与数据分离**：提示词声明工具返回的内容是资料不是指令；状态栏也标明“不是资料” | 防御文档中的注入文本（C10） | 第 3 章 RAG 安全边界 |
+| **提交闸门**：quote 必须是本次 `read_section` 读过的原文的连续片段；`answered` 不能只依据已废止文档；冲突状态至少需要两份文档的引用 | 杜绝“错误引用”这一关键缺陷；不通过时把原因退回给模型修正（最多 2 次） | 第 8 章 harness-safety-gate / trajectory-verifier |
+
+## 技术取舍
+
+| 选择 | 理由 | 代价 |
+|---|---|---|
+| 原生 harness，不用 LangGraph / ADK | 题目考察的是决策循环本身；自己实现时每一步都可见、可测（ScriptedLLM 能精确驱动每一轮）；约 300 行 | 没有框架自带的持久化、断点续跑 |
+| DeepSeek 官方 `deepseek-flash` + 思考模式 | 支持 function calling 和 strict schema；思考模式提升查证质量。注意：带 tools 的请求必须原样回传 `reasoning_content`，否则 400。harness 把整条 assistant 消息追加回上下文 | 每题约 10–25 秒，约 1–2 万输入 token |
+| strict 工具调用（`/beta` 端点） | 参数结构由服务端校验，减少参数缺失 | 仍可能出现非法 JSON（C05 出现过一次），harness 把它作为观察退回，模型下一轮重发 |
+| 对话历史以文本放进 user 消息 | 避免伪造不含 `reasoning_content` 的 assistant 历史消息 | 历史中不保留上一轮的工具细节，只保留答案和引用 ID |
+| **放弃向量检索（Milvus + embedding）** | ① 太重：评审需要部署 Milvus 并另外申请 embedding 密钥，复现门槛高；② 8 篇文档的规模下召回收益很小；③ 本题难点是冲突与版本，依赖结构化元数据而不是语义相似度；④ 改写问题由模型改写查询或目录导航解决 | 同义词召回依赖模型改写；`search` 接口保持 add/build/search，可替换为 Milvus + bge-m3 |
+| 启动时从 Markdown 构建索引，不持久化 | 修改文档后下次运行即生效（审核要点“替换文档内容”零成本）；同时做强校验 | 大规模知识库时启动慢，需要增量索引 |
+| CLI 为主入口，HTTP + 前端为演示 | 一条命令即可复现；前端只做提问、实时轨迹、结果三块 | 前端没有知识库编辑 |
+
+## 模块
+
+| 模块 | 文件 | 职责 |
+|---|---|---|
+| 主循环 | `src/agent/harness.py` | 上下文组装、模型调用、工具分发、预算、终止 |
+| 状态栏 | `src/agent/status_bar.py` | 渲染动态状态 |
+| 提交闸门 | `src/agent/gate.py` | 引用校验 |
+| 轨迹 | `src/agent/trace.py` | 返回摘要、后续动作、Markdown 渲染 |
+| 工具 | `src/tools/registry.py`、`faults.py` | 7 个工具的 strict schema、执行与错误转换、故障注入 |
+| 知识库 | `src/kb/store.py`、`retriever.py` | 加载、校验（必填字段、ID 唯一、替代关系双向一致、链接无死链、日期格式）、L0/L1/L2、BM25 |
+| 模型 | `src/llm/deepseek.py`、`mock.py` | DeepSeek 接入；离线 MockLLM（规则）；ScriptedLLM（测试） |
+| 入口 | `src/main.py`、`src/server.py`、`frontend/` | CLI；FastAPI SSE；Vue3 单页 |
+
+## 依赖与版本
+
+openai 2.x（OpenAI 兼容协议调用 DeepSeek）、jieba 0.42（分词）、PyYAML（front matter）、python-dotenv、FastAPI 0.128 + uvicorn（演示 API）、pytest 7.4；前端 Vue 3.5 + Vite 6。没有使用任何 Agent 框架。
