@@ -6,7 +6,7 @@
 - 知识库：层次型（Markdown 目录树，L0 目录摘要 / L1 文档大纲 / L2 小节原文），jieba + BM25 关键词检索，无向量库
 - Agent：原生实现的 ReAct harness（状态栏、提交闸门、预算、故障注入、完整 trace），未使用 Agent 框架
 - 评审主入口：**CLI**；另有 FastAPI（SSE）+ Vue3 单页作为演示入口
-- 结果：真实模型 11/11 用例通过（[报告](examples/live/report.md)），55 个自动化测试通过（[记录](examples/test-results.txt)）
+- 结果：真实模型 11/11 用例通过（[报告](examples/live/report.md)），关键用例复跑 9/9 通过（[报告](examples/live/stability/report.md)），56 个自动化测试通过（[记录](examples/test-results.txt)）
 
 ## 快速运行
 
@@ -88,8 +88,8 @@ cd frontend && npm install && npm run dev              # 前端 http://localhost
 ├── data/
 │   ├── kb/                  # 合成知识库（8 篇文档，制度/财务、人事、行政；产品/星剪App）
 │   └── kb_variants/no_conflict/   # 去掉 D02 的变体库
-├── scripts/run_eval.py      # 批量运行用例 + 断言 + 报告
-├── tests/                   # 55 个 pytest 测试
+├── scripts/                 # run_eval.py 批量运行 + 断言 + 报告；stability.py 稳定性复跑
+├── tests/                   # 56 个 pytest 测试
 ├── examples/
 │   ├── cases/               # 11 个用例输入（expect 内嵌）
 │   ├── live/                # 真实模型输出、trace、报告

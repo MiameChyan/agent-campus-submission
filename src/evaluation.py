@@ -9,15 +9,13 @@
   answer_contains_any     answer 至少包含其中一个
   answer_not_contains     answer 不能包含其中任何一个
   question_contains_any   追问内容至少包含其中一个
-  conclusion_contains_any 结论句（answer 第一句）至少包含其中一个
-  conclusion_not_contains 结论句不能包含其中任何一个（答案后文可以引述/警示，如注入文本）
+  conclusion_contains_any 结论（answer 第一行）至少包含其中一个
+  conclusion_not_contains 结论（answer 第一行）不能包含其中任何一个（答案后文可以引述/警示，如注入文本）
   tool_used               这些工具至少被调用过一次
   if_status               {状态: {子检查}}，仅当实际状态匹配时执行
   mock_known_limitation   说明字段：Mock 模式下预期无法通过的原因（不参与判定）
 """
 from __future__ import annotations
-
-import re
 
 
 def check_expect(expect: dict, result: dict) -> list[dict]:
@@ -32,7 +30,8 @@ def check_expect(expect: dict, result: dict) -> list[dict]:
     answer = result.get("answer") or ""
     question = result.get("clarifying_question") or ""
     used = set((result.get("stats") or {}).get("tool_calls_by_name", {}))
-    conclusion = re.split(r"[。\n]", answer.strip(), maxsplit=1)[0] if answer.strip() else ""
+    # 结论 = 答案第一行（提示词要求先给结论），去掉 Markdown 加粗
+    conclusion = answer.strip().splitlines()[0].replace("**", "") if answer.strip() else ""
 
     def run(exp: dict, prefix: str = ""):
         for key, val in exp.items():
@@ -53,10 +52,10 @@ def check_expect(expect: dict, result: dict) -> list[dict]:
                 hit = [v for v in val if v in answer]
                 add(name, not hit, f"answer 不得包含 {val}" + (f"，实际出现 {hit}" if hit else ""))
             elif key == "conclusion_contains_any":
-                add(name, any(v in conclusion for v in val), f"结论句「{conclusion}」需包含其一 {val}")
+                add(name, any(v in conclusion for v in val), f"结论「{conclusion}」需包含其一 {val}")
             elif key == "conclusion_not_contains":
                 hit = [v for v in val if v in conclusion]
-                add(name, not hit, f"结论句「{conclusion}」不得包含 {val}")
+                add(name, not hit, f"结论「{conclusion}」不得包含 {val}")
             elif key == "question_contains_any":
                 add(name, any(v in question for v in val), f"追问需包含其一 {val}")
             elif key == "tool_used":
