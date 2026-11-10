@@ -1,0 +1,198 @@
+{
+  "question": "发票最晚多少天内要交上去？",
+  "status": "conflict_needs_confirmation",
+  "incomplete_reason": null,
+  "mode": "live",
+  "model": "deepseek-flash",
+  "kb": "data/kb",
+  "retriever": "bm25",
+  "fault_injection": null,
+  "answer": "无法给出唯一时限：两份现行财务文件对\"提交期限\"的规定不一致，且都没有注明适用范围、也没有互相替代/废止的说明。\n\n- 《费用报销制度》（D01，2024-03-01，现行）第三条：应在费用发生之日起 **30 天**内提交报销申请，逾期须部门负责人书面说明原因。\n- 《报销管理补充通知》（D02，2025-01-10，现行）一、提交期限：报销申请应在费用发生后 **15 天**内提交。\n\n已查证：两份文件状态均为\"现行\"，scope 均\"未注明\"，supersedes/superseded_by 均为空，彼此仅互相链接，没有任何一份声明替代或废止另一份，因此无法据此判断哪一份优先。\n\n另需说明一个差别：你问的是\"发票最晚多少天内交上去\"，而两份文件规定的是\"报销申请/报销提交\"的期限（关于发票本身，只规定须提供合规发票、抬头为公司全称、金额一致，无发票不予报销；电子发票优先、纸质发票背面须注明报销人姓名），并未单独规定\"发票上交\"的时限，两者不能直接等同。\n\n请确认适用哪份制度（《费用报销制度》的 30 天，还是《报销管理补充通知》的 15 天），或向财务部确认该补充通知是否针对本制度作了期限变更。",
+  "citations": [
+    {
+      "doc_id": "D01",
+      "section_id": "s3",
+      "title": "费用报销制度",
+      "section_title": "第三条 报销期限",
+      "version_date": "2024-03-01",
+      "doc_status": "现行",
+      "quote": "员工应在费用发生之日起 30 天内提交报销申请，逾期提交须由部门负责人书面说明原因。"
+    },
+    {
+      "doc_id": "D02",
+      "section_id": "s1",
+      "title": "报销管理补充通知",
+      "section_title": "一、提交期限",
+      "version_date": "2025-01-10",
+      "doc_status": "现行",
+      "quote": "为加快财务结算，员工报销申请应在费用发生后 15 天内提交。"
+    },
+    {
+      "doc_id": "D01",
+      "section_id": "s2",
+      "title": "费用报销制度",
+      "section_title": "第二条 单据要求",
+      "version_date": "2024-03-01",
+      "doc_status": "现行",
+      "quote": "报销须提供合规发票或电子发票，发票抬头为公司全称，金额与实际支出一致；无发票的支出不予报销。"
+    },
+    {
+      "doc_id": "D02",
+      "section_id": "s2",
+      "title": "报销管理补充通知",
+      "section_title": "二、电子发票",
+      "version_date": "2025-01-10",
+      "doc_status": "现行",
+      "quote": "自本通知发布之日起，优先使用电子发票报销；纸质发票须在背面注明报销人姓名。"
+    }
+  ],
+  "conflicts": [
+    {
+      "description": "提交期限不一致：D01 规定费用发生后 30 天内提交报销申请，D02 规定 15 天内提交；两份均为现行、均未注明适用范围、无替代/废止关系，无法判断优先级。",
+      "doc_ids": [
+        "D01",
+        "D02"
+      ]
+    }
+  ],
+  "gaps": [
+    "缺少信息：D02《报销管理补充通知》是否为对 D01 提交期限的变更/收紧，及其适用范围（全员或特定范围）——需向财务部确认。",
+    "缺少信息：知识库中未见单独规定“发票上交/提交”时限的条款，若需该口径需向财务部确认。"
+  ],
+  "clarifying_question": null,
+  "stats": {
+    "llm_turns": 5,
+    "tool_calls": 7,
+    "tool_calls_by_name": {
+      "search": 1,
+      "outline": 2,
+      "read_section": 4
+    },
+    "gate_rejections": 0,
+    "budget": {
+      "max_llm_turns": 8,
+      "max_tool_calls": 12
+    },
+    "prompt_tokens": 18215,
+    "completion_tokens": 1684,
+    "elapsed_ms": 11561
+  },
+  "trace": [
+    {
+      "step": 1,
+      "turn": 1,
+      "action": "search",
+      "args": {
+        "query": "发票 报销 期限",
+        "top_k": 6
+      },
+      "reason": "用户问发票提交时限，先用制度原文可能的\"报销\"\"期限\"等词检索",
+      "ok": true,
+      "observation": "“发票 报销 期限” 命中 6 条：D01#s2 第二条 单据要求(现行)；D02#s2 二、电子发票(现行)；D02#s1 一、提交期限(现行)；D01#s3 第三条 报销期限(现行)",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "outline"
+    },
+    {
+      "step": 2,
+      "turn": 2,
+      "action": "outline",
+      "args": {
+        "doc_id": "D01"
+      },
+      "reason": "D01规定30天、D02规定15天，需查看版本与替代关系判断适用",
+      "ok": true,
+      "observation": "D01《费用报销制度》现行 2024-03-01 范围:未注明  小节 4 个",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "outline"
+    },
+    {
+      "step": 3,
+      "turn": 2,
+      "action": "outline",
+      "args": {
+        "doc_id": "D02"
+      },
+      "reason": "D02为较新的补充通知，需查其适用范围与是否替代D01",
+      "ok": true,
+      "observation": "D02《报销管理补充通知》现行 2025-01-10 范围:未注明  小节 2 个",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 4,
+      "turn": 3,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D01",
+        "section_id": "s3"
+      },
+      "reason": "读取费用报销制度第三条报销期限原文，核实30天规定",
+      "ok": true,
+      "observation": "D01#s3（现行）第三条 报销期限：员工应在费用发生之日起 30 天内提交报销申请，逾期提交须由部门负责人书面说明原因。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 5,
+      "turn": 3,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D02",
+        "section_id": "s1"
+      },
+      "reason": "读取补充通知提交期限原文，核实15天规定",
+      "ok": true,
+      "observation": "D02#s1（现行）一、提交期限：为加快财务结算，员工报销申请应在费用发生后 15 天内提交。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 6,
+      "turn": 4,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D01",
+        "section_id": "s2"
+      },
+      "reason": "确认单据要求小节是否单独规定了发票提交时限，避免把报销申请期限当成发票期限",
+      "ok": true,
+      "observation": "D01#s2（现行）第二条 单据要求：报销须提供合规发票或电子发票，发票抬头为公司全称，金额与实际支出一致；无发票的支出不予报销。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 7,
+      "turn": 4,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D02",
+        "section_id": "s2"
+      },
+      "reason": "查看补充通知电子发票小节是否另有时限要求",
+      "ok": true,
+      "observation": "D02#s2（现行）二、电子发票：自本通知发布之日起，优先使用电子发票报销；纸质发票须在背面注明报销人姓名。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "finish"
+    },
+    {
+      "step": 8,
+      "turn": 5,
+      "action": "finish",
+      "args": {
+        "status": "conflict_needs_confirmation"
+      },
+      "reason": "两份现行文件分别规定 30 天与 15 天且无替代关系，已查证版本、状态、范围后仍无法判定适用，按规则列出双方原文并请用户确认。",
+      "ok": true,
+      "observation": "闸门通过，状态 conflict_needs_confirmation，有效引用 4 条",
+      "kind": "terminal",
+      "next_action": "（结束）"
+    }
+  ]
+}

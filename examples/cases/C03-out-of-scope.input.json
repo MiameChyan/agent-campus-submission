@@ -16,6 +16,10 @@
       "D06",
       "D07",
       "D08"
-    ]
-  }
+    ],
+    "gaps_nonempty": true
+  },
+  "assertion_history": [
+    "v4（第三轮外部复查，Codex + DeepSeek）：资料外问题必须在 gaps 中说明缺少的资料；不能携带任何引用（闸门同时拦截）。"
+  ]
 }

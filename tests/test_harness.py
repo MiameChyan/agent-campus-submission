@@ -162,3 +162,15 @@ def test_should_stop_cancels_between_turns(make_agent):
     res = agent.run("q")
     assert res["status"] == "cancelled" and res["stats"]["llm_turns"] == 1
     assert res["trace"][-1]["action"] == "(cancelled)"
+
+
+def test_literal_backslash_n_is_normalized_and_rejections_keep_answer_preview(make_agent):
+    bad = [{"doc_id": "D05", "section_id": "s2", "quote": "员工每周最多可远程办公 3 天"}]
+    llm = ScriptedLLM([
+        [("read_section", {"doc_id": "D05", "section_id": "s2", **R})],
+        [_finish("answered", bad, answer="每周 3 天。")],
+        [_finish("answered", CITE_D05, answer="经批准每周最多 2 天。" + "\\n\\n" + "依据：D05。")],
+    ])
+    res = make_agent(llm).run("q")
+    assert res["status"] == "answered" and res["answer"] == "经批准每周最多 2 天。\n\n依据：D05。"
+    assert res["trace"][1]["args"]["answer_preview"] == "每周 3 天。"

@@ -1,0 +1,140 @@
+{
+  "question": "按现行制度，员工的年假有几天？",
+  "status": "answered",
+  "incomplete_reason": null,
+  "mode": "live",
+  "model": "deepseek-flash",
+  "kb": "data/kb",
+  "retriever": "bm25",
+  "fault_injection": null,
+  "answer": "按现行《年假制度（2025 版）》（D07），员工年假天数按累计工作年限分档：\n\n- 累计工作满 1 年不满 10 年：年假 7 天\n- 满 10 年不满 20 年：年假 12 天\n- 满 20 年：年假 15 天\n\n适用对象为全体正式员工。旧版《年假制度（2023 版）》（D03）已被 D07 替代，并自 2025-01-01 起废止，其规定不再适用（旧版具体天数不再引用，如需对比请另行查阅 D03 原文）。",
+  "citations": [
+    {
+      "doc_id": "D07",
+      "section_id": "s1",
+      "title": "年假制度（2025 版）",
+      "section_title": "第一条 年假天数",
+      "version_date": "2025-01-01",
+      "doc_status": "现行",
+      "quote": "员工累计工作满 1 年不满 10 年的，年假 7 天；满 10 年不满 20 年的，年假 12 天；满 20 年的，年假 15 天。"
+    },
+    {
+      "doc_id": "D07",
+      "section_id": "s4",
+      "title": "年假制度（2025 版）",
+      "section_title": "第四条 生效与废止",
+      "version_date": "2025-01-01",
+      "doc_status": "现行",
+      "quote": "本制度自 2025 年 1 月 1 日起施行，原《年假制度（2023 版）》（D03）同时废止。"
+    }
+  ],
+  "conflicts": [],
+  "gaps": [
+    "D07 适用范围为“全体正式员工”，若提问对象为实习生、劳务派遣等非正式员工，其年假安排需向人力资源部确认。"
+  ],
+  "clarifying_question": null,
+  "stats": {
+    "llm_turns": 4,
+    "tool_calls": 4,
+    "tool_calls_by_name": {
+      "search": 1,
+      "browse": 1,
+      "read_section": 2
+    },
+    "gate_rejections": 1,
+    "budget": {
+      "max_llm_turns": 8,
+      "max_tool_calls": 12
+    },
+    "prompt_tokens": 14916,
+    "completion_tokens": 1264,
+    "elapsed_ms": 7018
+  },
+  "trace": [
+    {
+      "step": 1,
+      "turn": 1,
+      "action": "search",
+      "args": {
+        "query": "年假",
+        "top_k": 8
+      },
+      "reason": "检索与年假天数相关的制度小节",
+      "ok": true,
+      "observation": "“年假” 命中 6 条：D03#s1 第一条 年假天数(已废止)；D07#s1 第一条 年假天数(现行)；D07#s3 第三条 结转规则(现行)；D07#s4 第四条 生效与废止(现行)",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "browse"
+    },
+    {
+      "step": 2,
+      "turn": 1,
+      "action": "browse",
+      "args": {
+        "path": "制度/人事"
+      },
+      "reason": "浏览人事制度目录，确认有哪些休假制度文档及其状态",
+      "ok": true,
+      "observation": "目录 制度/人事：子目录 无；文档 D03(已废止)、D05(现行)、D07(现行)",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 3,
+      "turn": 2,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D07",
+        "section_id": "s1"
+      },
+      "reason": "读取现行年假制度关于天数的原文",
+      "ok": true,
+      "observation": "D07#s1（现行）第一条 年假天数：员工累计工作满 1 年不满 10 年的，年假 7 天；满 10 年不满 20 年的，年假 12 天；…",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 4,
+      "turn": 2,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D07",
+        "section_id": "s4"
+      },
+      "reason": "确认现行制度生效并废止旧版，作为版本适用依据",
+      "ok": true,
+      "observation": "D07#s4（现行）第四条 生效与废止：本制度自 2025 年 1 月 1 日起施行，原《年假制度（2023 版）》（D03）同时废止。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "finish"
+    },
+    {
+      "step": 5,
+      "turn": 3,
+      "action": "finish",
+      "args": {
+        "status": "answered"
+      },
+      "reason": "已读取现行版年假天数条款及其废止旧版的生效条款，可给出明确答案。",
+      "ok": false,
+      "observation": "闸门退回：答案中的数值 “5 天” 在所引用的原文中找不到（已引用：D07#s1、D07#s4）。用户问题里的数值不能作为依据。请核对结论是否与原文一致，或补充引用能支持该数值的原文。",
+      "kind": "gate_reject",
+      "next_action": "finish"
+    },
+    {
+      "step": 6,
+      "turn": 4,
+      "action": "finish",
+      "args": {
+        "status": "answered"
+      },
+      "reason": "删除无原文支持的数字后重新提交，天数均来自 D07#s1 原文。",
+      "ok": true,
+      "observation": "闸门通过，状态 answered，有效引用 2 条",
+      "kind": "terminal",
+      "next_action": "（结束）"
+    }
+  ]
+}

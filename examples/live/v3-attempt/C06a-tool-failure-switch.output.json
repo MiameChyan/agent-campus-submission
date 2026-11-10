@@ -1,0 +1,155 @@
+{
+  "question": "我每周可以远程办公几天？",
+  "status": "answered",
+  "incomplete_reason": null,
+  "mode": "live",
+  "model": "deepseek-flash",
+  "kb": "data/kb",
+  "retriever": "bm25",
+  "fault_injection": "search:always",
+  "answer": "按《远程办公制度》（D05，2024-06-01，现行）：员工每周最多可远程办公 2 天，且需经部门负责人批准。\n\n适用条件：仅适用于已转正的正式员工，试用期员工不适用。\n\n依据：\n- D05《远程办公制度》第二条 远程办公天数：“经部门负责人批准，员工每周最多可远程办公 2 天。”\n- D05《远程办公制度》第一条 适用人员：“本制度适用于已转正的正式员工，试用期员工不适用。”\n\n说明：制度原文未说明“每周”的具体计算口径，如需明确请向人力资源部确认；具体申请流程见该制度第三条，可另行查询。",
+  "citations": [
+    {
+      "doc_id": "D05",
+      "section_id": "s2",
+      "title": "远程办公制度",
+      "section_title": "第二条 远程办公天数",
+      "version_date": "2024-06-01",
+      "doc_status": "现行",
+      "quote": "经部门负责人批准，员工每周最多可远程办公 2 天。"
+    },
+    {
+      "doc_id": "D05",
+      "section_id": "s1",
+      "title": "远程办公制度",
+      "section_title": "第一条 适用人员",
+      "version_date": "2024-06-01",
+      "doc_status": "现行",
+      "quote": "本制度适用于已转正的正式员工，试用期员工不适用。"
+    }
+  ],
+  "conflicts": [],
+  "gaps": [
+    "制度原文未说明“每周”的起止计算口径，需向人力资源部确认。"
+  ],
+  "clarifying_question": null,
+  "stats": {
+    "llm_turns": 5,
+    "tool_calls": 5,
+    "tool_calls_by_name": {
+      "search": 1,
+      "browse": 1,
+      "outline": 1,
+      "read_section": 2
+    },
+    "gate_rejections": 1,
+    "budget": {
+      "max_llm_turns": 8,
+      "max_tool_calls": 12
+    },
+    "prompt_tokens": 17058,
+    "completion_tokens": 1414,
+    "elapsed_ms": 9584
+  },
+  "trace": [
+    {
+      "step": 1,
+      "turn": 1,
+      "action": "search",
+      "args": {
+        "query": "远程办公",
+        "top_k": 8
+      },
+      "reason": "直接检索“远程办公”关键词，找到相关制度",
+      "ok": false,
+      "observation": "失败 ServiceUnavailable（可重试）：search 服务暂时不可用（注入故障，第 1 次调用）",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "browse"
+    },
+    {
+      "step": 2,
+      "turn": 1,
+      "action": "browse",
+      "args": {
+        "path": "制度/人事"
+      },
+      "reason": "人事目录可能包含考勤与远程办公制度，作为检索补充",
+      "ok": true,
+      "observation": "目录 制度/人事：子目录 无；文档 D03(已废止)、D05(现行)、D07(现行)",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "outline"
+    },
+    {
+      "step": 3,
+      "turn": 2,
+      "action": "outline",
+      "args": {
+        "doc_id": "D05"
+      },
+      "reason": "确认 D05 的状态、适用范围与替代关系，并定位天数上限小节",
+      "ok": true,
+      "observation": "D05《远程办公制度》现行 2024-06-01 范围:全体正式员工（试用期员工除外）  小节 3 个",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 4,
+      "turn": 3,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D05",
+        "section_id": "s2"
+      },
+      "reason": "读取远程办公天数上限的原文作为回答依据",
+      "ok": true,
+      "observation": "D05#s2（现行）第二条 远程办公天数：经部门负责人批准，员工每周最多可远程办公 2 天。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 5,
+      "turn": 3,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D05",
+        "section_id": "s1"
+      },
+      "reason": "确认适用人员范围（试用期员工除外），以便说明适用条件",
+      "ok": true,
+      "observation": "D05#s1（现行）第一条 适用人员：本制度适用于已转正的正式员工，试用期员工不适用。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "finish"
+    },
+    {
+      "step": 6,
+      "turn": 4,
+      "action": "finish",
+      "args": {
+        "status": "answered"
+      },
+      "reason": "D05 为现行版本且原文明确给出天数上限与适用人员，足以直接作答。",
+      "ok": false,
+      "observation": "闸门退回：答案中的数值 “7 天” 在所引用的原文中找不到（已引用：D05#s1、D05#s2）。用户问题里的数值不能作为依据。请核对结论是否与原文一致，或补充引用能支持该数值的原文。",
+      "kind": "gate_reject",
+      "next_action": "finish"
+    },
+    {
+      "step": 7,
+      "turn": 5,
+      "action": "finish",
+      "args": {
+        "status": "answered"
+      },
+      "reason": "已删除无原文依据的数值表述，其余结论均有 D05 原文支持。",
+      "ok": true,
+      "observation": "闸门通过，状态 answered，有效引用 2 条",
+      "kind": "terminal",
+      "next_action": "（结束）"
+    }
+  ]
+}

@@ -66,7 +66,6 @@ class Agent:
     def run(self, question: str, history: list[dict] | None = None) -> dict:
         t0 = time.perf_counter()
         state = RunState(self.max_llm_turns, self.max_tool_calls)
-        state.context_text = _history_block(history) + question
         steps: list[dict] = []
         messages: list[dict] = [
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -153,11 +152,16 @@ class Agent:
 
         # ---- 终止工具 ----
         if name == "finish":
+            answer = str(args.get("answer", ""))
+            if "\\n" in answer and "\n" not in answer:
+                # 个别情况下模型会把换行转义两次，输出字面的 \n；统一还原为换行（只是格式规整）
+                answer = answer.replace("\\n", "\n")
+                args = {**args, "answer": answer}
             gate = check_finish(args, state)
             if gate.ok:
                 outcome = {
                     "status": args["status"],
-                    "answer": args.get("answer", ""),
+                    "answer": answer,
                     "citations": gate.citations,
                     "conflicts": args.get("conflicts") or [],
                     "gaps": args.get("gaps") or [],
@@ -170,7 +174,9 @@ class Agent:
             state.gate_feedback.append("；".join(gate.problems))
             obs = {"ok": False, "error_type": "GateRejected", "problems": gate.problems, "retryable": True,
                    "suggestion": "按问题修正后重新 finish；需要更多证据就先 read_section。"}
-            return obs, dict(action="finish", args={"status": args.get("status")}, reason=reason, ok=False,
+            # 被退回的提交在执行记录里附上答案片段，便于事后排查（通过的提交以最终输出为准）
+            return obs, dict(action="finish", args={"status": args.get("status"), "answer_preview": answer[:160]},
+                             reason=reason, ok=False,
                              observation="闸门退回：" + "；".join(gate.problems)[:160], kind="gate_reject")
         if name == "ask_user":
             outcome = {"status": "need_clarification", "answer": "", "clarifying_question": args.get("question", "")}

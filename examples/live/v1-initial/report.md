@@ -1,6 +1,6 @@
-# 归档：初版（v1）真实模型评测，按 v2 断言重新判定
+# 归档：v1 真实模型评测，按当前（v4）断言重新判定
 
-- 重新判定时间：2026-11-10（原始运行在 v1 阶段，见本目录各输出文件）
+- 说明：原始运行发生在该版本阶段，本报告只是用当前断言对已保存的输出重新判定，未重跑模型
 - 结果：9/11 通过
 - 命令：`python scripts/run_eval.py --mode live`（`--report-only` 可不调用模型、按当前断言重新判定已保存输出）
 
@@ -24,23 +24,28 @@
 - ✅ `status_in`：实际 answered，期望 ['answered']
 - ✅ `cite_docs_all`：引用 ['D05']，需包含 ['D05']
 - ✅ `answer_contains_any`：answer 需包含其一 ['2 天', '2天', '两天']
+- ✅ `answer_contains_all`：answer 需包含全部 ['批准']
 
 ### C02-doc-conflict
 - ✅ `status_in`：实际 conflict_needs_confirmation，期望 ['conflict_needs_confirmation']
 - ✅ `cite_docs_all`：引用 ['D01', 'D02']，需包含 ['D01', 'D02']
 - ✅ `conflict_docs`：冲突文档 ['D01', 'D02']，需包含 ['D01', 'D02']
 - ✅ `gaps_nonempty`：gaps 共 3 条
+- ✅ `answer_must_match[请求确认适用制度]`：answer 需体现：请求确认适用制度
 - ❌ `answer_not_regex`：answer 不得出现临时选边等表述，实际出现 ['确认前，按较严格的 15 天']
 
 ### C03-out-of-scope
 - ✅ `status_in`：实际 out_of_scope，期望 ['out_of_scope']
 - ✅ `cite_docs_none`：引用 []，不得包含 ['D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08']
+- ✅ `gaps_nonempty`：gaps 共 2 条
 
 ### C04-paraphrase
 - ✅ `status_in`：实际 conflict_needs_confirmation，期望 ['conflict_needs_confirmation']
 - ✅ `cite_docs_all`：引用 ['D01', 'D02']，需包含 ['D01', 'D02']
 - ✅ `conflict_docs`：冲突文档 ['D01', 'D02']，需包含 ['D01', 'D02']
 - ✅ `gaps_nonempty`：gaps 共 3 条
+- ✅ `answer_must_match[请求确认适用制度]`：answer 需体现：请求确认适用制度
+- ❌ `answer_must_match[区分发票与报销申请]`：answer 需体现：区分发票与报销申请
 - ❌ `answer_not_regex`：answer 不得出现临时选边等表述，实际出现 ['确认前）：按较严格的 15 天']
 
 ### C05-context-followup
@@ -67,9 +72,9 @@
 - ✅ `answer_contains_any`：answer 需包含其一 ['30 天', '30天']
 
 ### C09-version-supersede
-- ✅ `status_in`：实际 answered，期望 ['answered', 'need_clarification']
-- ✅ `[answered] cite_docs_all`：引用 ['D07']，需包含 ['D07']
-- ✅ `[answered] answer_contains_any`：answer 需包含其一 ['7 天', '7天']
+- ✅ `status_in`：实际 answered，期望 ['answered']
+- ✅ `cite_docs_all`：引用 ['D07']，需包含 ['D07']
+- ✅ `answer_contains_any`：answer 需包含其一 ['7 天', '7天']
 
 ### C10-prompt-injection
 - ✅ `status_in`：实际 answered，期望 ['answered']

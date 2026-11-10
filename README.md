@@ -86,13 +86,16 @@ cd frontend && npm install && npm run dev
 ├── frontend/                         # 网页对话界面（React + TypeScript）
 ├── scripts/
 │   ├── run_eval.py                   # 批量运行用例并按预期自动判定
-│   └── stability.py                  # 关键用例重复运行
-├── tests/                            # 98 个自动化测试
+│   ├── stability.py                  # 关键用例重复运行
+│   └── replay_gate.py                # 用当前闸门离线回放全部历史输出
+├── tests/                            # 115 个自动化测试
 ├── examples/
 │   ├── cases/                        # 11 个用例的输入与预期
 │   ├── live/                         # 真实模型的输出、执行记录与评测报告
 │   │   ├── stability/                # 稳定性复跑
-│   │   └── v1-initial/               # 修复前（v1）的运行记录归档
+│   │   ├── v1-initial/               # 第一次外部评审前的运行记录归档
+│   │   ├── v2-gate/                  # 第二次外部复查前的运行记录归档
+│   │   └── v3-attempt/               # 发现闸门误伤的那次运行归档
 │   ├── mock/                         # 离线 Mock 的输出与报告
 │   └── test-results.txt              # 自动化测试的实际输出
 └── docs/
@@ -117,8 +120,8 @@ cd frontend && npm install && npm run dev
 
 ## 提交约定
 
-- 题号：第 3 题 企业知识问答 Agent。所有代码、文档、合成数据与运行结果都在本仓库中。
+- 题号：第 3 题 企业知识问答 Agent。GitHub 仓库：https://github.com/MiameChyan/agent-campus-submission （公开）。最终 commit SHA 以提交表单中填写的为准（一个提交无法在自身内容里写入自己的 SHA）。所有代码、文档、合成数据与运行结果都在本仓库中。
 - 仓库不含真实密钥：`.env` 已被 git 忽略，`.env.example` 只列出变量名。知识库为合成数据，不含真实业务或个人信息。
-- `examples/live/` 是真实模型的运行记录；`examples/mock/` 是离线 Mock 的结果，不能作为模型效果的依据。
+- `examples/live/` 是最终版本的真实模型运行记录，`v1-initial/`、`v2-gate/`、`v3-attempt/` 是历次修复前的记录归档（报告均已按最新断言重新判定）；`examples/mock/` 是离线 Mock 的结果，不能作为模型效果的依据。
 - 除 DeepSeek 外的模型提供方、真实 embedding 服务与 Milvus 只完成了适配和单元测试，没有在真实环境中评测，详见[测试与评估](docs/03-evaluation.md)。
 - AI 辅助的范围、个人修改与验证方式见 [AI 使用说明](docs/04-ai-usage.md)；实际用时与未完成部分见[复盘](docs/05-retrospective.md)。

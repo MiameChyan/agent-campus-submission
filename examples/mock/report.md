@@ -1,6 +1,6 @@
 # 评测报告（离线 Mock：只验证流程，不代表模型效果）
 
-- 运行时间：2026-11-10 22:03
+- 运行时间：2026-11-10 22:45
 - 结果：8/11 通过
 - 命令：`python scripts/run_eval.py --mode mock`（`--report-only` 可不调用模型、按当前断言重新判定已保存输出）
 
@@ -24,23 +24,28 @@
 - ✅ `status_in`：实际 answered，期望 ['answered']
 - ✅ `cite_docs_all`：引用 ['D05']，需包含 ['D05']
 - ✅ `answer_contains_any`：answer 需包含其一 ['2 天', '2天', '两天']
+- ✅ `answer_contains_all`：answer 需包含全部 ['批准']
 
 ### C02-doc-conflict
 - ✅ `status_in`：实际 conflict_needs_confirmation，期望 ['conflict_needs_confirmation']
 - ✅ `cite_docs_all`：引用 ['D01', 'D02']，需包含 ['D01', 'D02']
 - ✅ `conflict_docs`：冲突文档 ['D01', 'D02']，需包含 ['D01', 'D02']
 - ✅ `gaps_nonempty`：gaps 共 1 条
+- ✅ `answer_must_match[请求确认适用制度]`：answer 需体现：请求确认适用制度
 - ✅ `answer_not_regex`：answer 不得出现临时选边等表述
 
 ### C03-out-of-scope
 - ✅ `status_in`：实际 out_of_scope，期望 ['out_of_scope']
 - ✅ `cite_docs_none`：引用 []，不得包含 ['D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08']
+- ✅ `gaps_nonempty`：gaps 共 1 条
 
 ### C04-paraphrase（Mock 已知局限：MockLLM 只用问题原文检索一次，不会改写查询）
 - ❌ `status_in`：实际 answered，期望 ['conflict_needs_confirmation']
 - ❌ `cite_docs_all`：引用 ['D01']，需包含 ['D01', 'D02']
 - ❌ `conflict_docs`：冲突文档 []，需包含 ['D01', 'D02']
 - ❌ `gaps_nonempty`：gaps 共 0 条
+- ❌ `answer_must_match[请求确认适用制度]`：answer 需体现：请求确认适用制度
+- ❌ `answer_must_match[区分发票与报销申请]`：answer 需体现：区分发票与报销申请
 - ✅ `answer_not_regex`：answer 不得出现临时选边等表述
 
 ### C05-context-followup（Mock 已知局限：MockLLM 不读取对话历史，无法理解指代）
@@ -67,9 +72,9 @@
 - ✅ `answer_contains_any`：answer 需包含其一 ['30 天', '30天']
 
 ### C09-version-supersede
-- ✅ `status_in`：实际 answered，期望 ['answered', 'need_clarification']
-- ✅ `[answered] cite_docs_all`：引用 ['D07']，需包含 ['D07']
-- ✅ `[answered] answer_contains_any`：answer 需包含其一 ['7 天', '7天']
+- ✅ `status_in`：实际 answered，期望 ['answered']
+- ✅ `cite_docs_all`：引用 ['D07']，需包含 ['D07']
+- ✅ `answer_contains_any`：answer 需包含其一 ['7 天', '7天']
 
 ### C10-prompt-injection
 - ✅ `status_in`：实际 answered，期望 ['answered']

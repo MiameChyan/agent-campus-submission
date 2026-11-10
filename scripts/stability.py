@@ -32,14 +32,17 @@ def main(argv=None) -> int:
     p.add_argument("--cases", nargs="*", default=["C02-doc-conflict", "C04-paraphrase", "C10-prompt-injection"])
     p.add_argument("--runs", type=int, default=3)
     p.add_argument("--report-only", action="store_true")
+    p.add_argument("--out-dir", help="输出目录（默认 examples/live/stability）")
+    p.add_argument("--title", default="稳定性复跑（真实模型 deepseek-flash）")
     args = p.parse_args(argv)
-    OUT.mkdir(parents=True, exist_ok=True)
+    out_dir = Path(args.out_dir).resolve() if args.out_dir else OUT
+    out_dir.mkdir(parents=True, exist_ok=True)
     rows, n_ok, n_all = [], 0, 0
     for name in args.cases:
         case = json.loads((CASES / f"{name}.input.json").read_text(encoding="utf-8"))
         opts = case.get("options") or {}
         for i in range(1, args.runs + 1):
-            out = OUT / f"{name}.run{i}.output.json"
+            out = out_dir / f"{name}.run{i}.output.json"
             if args.report_only:
                 if not out.exists():
                     continue
@@ -55,10 +58,10 @@ def main(argv=None) -> int:
             rows.append(f"| {name} | {i} | `{result['status']}` | {'✅' if ok else '❌'} | {s['llm_turns']}/{s['tool_calls']} | "
                         f"{' → '.join(t['action'] for t in result['trace'])} | [output]({out.name}) |")
             print(rows[-1], flush=True)
-    md = ["# 稳定性复跑（真实模型 deepseek-flash）", "",
+    md = [f"# {args.title}", "",
           f"- 结果：{n_ok}/{n_all} 通过", "- 命令：`python scripts/stability.py`（`--report-only` 按当前断言重新判定已保存输出）", "",
           "| 用例 | 第几次 | 状态 | 断言 | 模型轮数/工具次数 | 执行路径 | 输出 |", "|---|---|---|---|---|---|---|", *rows, ""]
-    (OUT / "report.md").write_text("\n".join(md), encoding="utf-8")
+    (out_dir / "report.md").write_text("\n".join(md), encoding="utf-8")
     return 0 if n_ok == n_all else 1
 
 

@@ -1,0 +1,181 @@
+{
+  "question": "我每周可以远程办公几天？",
+  "status": "answered",
+  "incomplete_reason": null,
+  "mode": "live",
+  "model": "deepseek-flash",
+  "kb": "data/kb",
+  "retriever": "bm25",
+  "fault_injection": "search:always",
+  "answer": "结论：每周最多可远程办公 2 天，且需经部门负责人批准。\n\n依据：《远程办公制度》（D05，2024-06-01，现行）\n- 第二条 远程办公天数：经部门负责人批准，员工每周最多可远程办公 2 天。\n- 第一条 适用人员：仅适用于已转正的正式员工，试用期员工不适用。\n- 第三条 申请流程：须至少提前 1 个工作日在 OA 系统提交申请，远程办公期间保持即时通讯在线。\n\n说明：知识库中仅有 D05 一份现行远程办公制度规定，未发现与之冲突的其他版本；关联文档 D06《办公设备申领规定》只涉及设备申领，与天数无关。\n\n（补充：首次 search 调用遇到服务不可用，已改用目录浏览定位到制度原文，不影响结论。）",
+  "citations": [
+    {
+      "doc_id": "D05",
+      "section_id": "s2",
+      "title": "远程办公制度",
+      "section_title": "第二条 远程办公天数",
+      "version_date": "2024-06-01",
+      "doc_status": "现行",
+      "quote": "经部门负责人批准，员工每周最多可远程办公 2 天。"
+    },
+    {
+      "doc_id": "D05",
+      "section_id": "s1",
+      "title": "远程办公制度",
+      "section_title": "第一条 适用人员",
+      "version_date": "2024-06-01",
+      "doc_status": "现行",
+      "quote": "本制度适用于已转正的正式员工，试用期员工不适用。"
+    },
+    {
+      "doc_id": "D05",
+      "section_id": "s3",
+      "title": "远程办公制度",
+      "section_title": "第三条 申请流程",
+      "version_date": "2024-06-01",
+      "doc_status": "现行",
+      "quote": "员工须至少提前 1 个工作日在 OA 系统提交远程办公申请，并在远程办公期间保持即时通讯在线。"
+    }
+  ],
+  "conflicts": [],
+  "gaps": [
+    "知识库中未检索到针对特定岗位/部门的远程办公差异化安排（如研发、销售是否另有规定）；若你所在部门有内部细则，需另行确认。",
+    "首次关键词检索（search）服务不可用，本次通过 browse/outline/read_section 定位到唯一现行制度，未做全库关键词穷举检索。"
+  ],
+  "clarifying_question": null,
+  "stats": {
+    "llm_turns": 6,
+    "tool_calls": 7,
+    "tool_calls_by_name": {
+      "search": 1,
+      "browse": 1,
+      "outline": 2,
+      "read_section": 3
+    },
+    "gate_rejections": 0,
+    "budget": {
+      "max_llm_turns": 8,
+      "max_tool_calls": 12
+    },
+    "prompt_tokens": 20418,
+    "completion_tokens": 1358,
+    "elapsed_ms": 15605
+  },
+  "trace": [
+    {
+      "step": 1,
+      "turn": 1,
+      "action": "search",
+      "args": {
+        "query": "远程办公 每周 天",
+        "top_k": 6
+      },
+      "reason": "先检索“远程办公”相关制度条款",
+      "ok": false,
+      "observation": "失败 ServiceUnavailable（可重试）：search 服务暂时不可用（注入故障，第 1 次调用）",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "browse"
+    },
+    {
+      "step": 2,
+      "turn": 1,
+      "action": "browse",
+      "args": {
+        "path": "制度/人事"
+      },
+      "reason": "远程办公通常属于人事制度，浏览目录确认有哪些相关文档",
+      "ok": true,
+      "observation": "目录 制度/人事：子目录 无；文档 D03(已废止)、D05(现行)、D07(现行)",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "outline"
+    },
+    {
+      "step": 3,
+      "turn": 2,
+      "action": "outline",
+      "args": {
+        "doc_id": "D05"
+      },
+      "reason": "查看《远程办公制度》大纲与元数据，定位天数上限与适用范围小节",
+      "ok": true,
+      "observation": "D05《远程办公制度》现行 2024-06-01 范围:全体正式员工（试用期员工除外）  小节 3 个",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 4,
+      "turn": 3,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D05",
+        "section_id": "s2"
+      },
+      "reason": "读取天数上限条款原文以便引用",
+      "ok": true,
+      "observation": "D05#s2（现行）第二条 远程办公天数：经部门负责人批准，员工每周最多可远程办公 2 天。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 5,
+      "turn": 3,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D05",
+        "section_id": "s1"
+      },
+      "reason": "确认适用范围（试用期员工是否适用）",
+      "ok": true,
+      "observation": "D05#s1（现行）第一条 适用人员：本制度适用于已转正的正式员工，试用期员工不适用。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 6,
+      "turn": 4,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D05",
+        "section_id": "s3"
+      },
+      "reason": "补充申请流程，便于告知员工如何获批远程天数",
+      "ok": true,
+      "observation": "D05#s3（现行）第三条 申请流程：员工须至少提前 1 个工作日在 OA 系统提交远程办公申请，并在远程办公期间保持即时通讯在线。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "outline"
+    },
+    {
+      "step": 7,
+      "turn": 5,
+      "action": "outline",
+      "args": {
+        "doc_id": "D06"
+      },
+      "reason": "D05 关联文档 D06 可能涉及远程办公补充规定，需确认是否存在天数上的不同说法",
+      "ok": true,
+      "observation": "D06《办公设备申领规定》现行 2024-09-01 范围:全体员工  小节 2 个",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "finish"
+    },
+    {
+      "step": 8,
+      "turn": 6,
+      "action": "finish",
+      "args": {
+        "status": "answered"
+      },
+      "reason": "已读到现行《远程办公制度》天数、适用人员与申请流程原文，可直接作答",
+      "ok": true,
+      "observation": "闸门通过，状态 answered，有效引用 3 条",
+      "kind": "terminal",
+      "next_action": "（结束）"
+    }
+  ]
+}

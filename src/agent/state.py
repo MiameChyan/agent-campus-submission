@@ -39,7 +39,6 @@ class RunState:
     budget_blocked: bool = False                 # 预算耗尽后模型仍调用业务工具
     gate_feedback: list[str] = field(default_factory=list)
     usage: Counter = field(default_factory=Counter)
-    context_text: str = ""                       # 用户问题与对话历史（闸门核对数值来源时使用）
 
     @staticmethod
     def signature(name: str, args: dict) -> str:

@@ -6,19 +6,17 @@
   "note": "D03(2023, 已废止) 与 D07(2025, 现行) 天数不同，但 D07 写明替代 D03：应查证后依据 D07 回答。",
   "expect": {
     "status_in": [
-      "answered",
-      "need_clarification"
+      "answered"
     ],
-    "if_status": {
-      "answered": {
-        "cite_docs_all": [
-          "D07"
-        ],
-        "answer_contains_any": [
-          "7 天",
-          "7天"
-        ]
-      }
-    }
-  }
+    "cite_docs_all": [
+      "D07"
+    ],
+    "answer_contains_any": [
+      "7 天",
+      "7天"
+    ]
+  },
+  "assertion_history": [
+    "v4（第三轮外部复查，Codex + DeepSeek）：只接受依据 D07 的明确回答，不再接受零引用的追问。"
+  ]
 }

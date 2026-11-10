@@ -7,20 +7,19 @@
   "kb": "data/kb",
   "retriever": "bm25",
   "fault_injection": "search:always,browse:always,outline:always,read_section:always",
-  "answer": "抱歉，暂时无法回答「每周可远程办公几天」这个问题：本次检索工具故障，未能取得任何制度原文，因此不能给出天数结论（也不应凭常识推断）。\n\n已尝试的动作：\n- search 关键词检索 5 次（「远程办公」「居家办公 天数 每周」「远程办公 居家」「考勤」「灵活办公 办公地点 申请」），全部返回 ServiceUnavailable；\n- browse 目录浏览 3 次（根目录 2 次、制度/人事 1 次），同样返回 ServiceUnavailable。\n\n目前状态：知识库中与远程办公/居家办公相关的制度（含版本、状态、适用范围）尚未读取到任何内容，无法判断是否存在可远程办公的天数规定，也无法查证多份制度间的版本或替代关系。\n\n建议：待检索服务恢复后重试；如你已知相关制度的名称或文档 ID（例如人事类考勤/灵活办公制度），告诉我可直接定位读取，确认后我再给出带原文引用的答案。",
+  "answer": "暂时无法回答「每周可远程办公几天」。\n\n原因：知识检索（search）和目录浏览（browse）两个工具本轮各调用 3 次，全部返回 ServiceUnavailable 错误，因此我没有读到任何制度原文，无法给出可引用的天数规定。按规则，我不能凭常识或经验补全答案。\n\n已尝试的检索：关键词「远程办公」「居家办公 天数 每周」「远程办公 每周 天数」，以及根目录、「制度」、「制度/行政」的目录浏览。\n\n建议：稍后重试，或由你提供具体制度名称/文档编号，我再直接查证其「远程办公/居家办公」条款。",
   "citations": [],
   "conflicts": [],
   "gaps": [
-    "检索与浏览工具（search×5、browse×3）全部因 ServiceUnavailable 失败，未能读取任何制度原文，远程办公天数规定未知。",
-    "未确认公司是否存在远程/居家办公制度，以及其版本、状态（有效/已废止）与适用范围。",
-    "需要用户提供相关制度名称或文档 ID，或待服务恢复后重试检索。"
+    "检索工具 search 与浏览工具 browse 均连续失败（ServiceUnavailable），未能获取任何制度原文，远程办公天数的规定内容未知。",
+    "需向知识库管理员确认检索/浏览服务恢复情况，或由提问人提供适用的制度名称或文档编号。"
   ],
   "clarifying_question": null,
   "stats": {
-    "llm_turns": 6,
-    "tool_calls": 8,
+    "llm_turns": 5,
+    "tool_calls": 6,
     "tool_calls_by_name": {
-      "search": 5,
+      "search": 3,
       "browse": 3
     },
     "gate_rejections": 0,
@@ -28,9 +27,9 @@
       "max_llm_turns": 8,
       "max_tool_calls": 12
     },
-    "prompt_tokens": 19025,
-    "completion_tokens": 1518,
-    "elapsed_ms": 12740
+    "prompt_tokens": 15235,
+    "completion_tokens": 1146,
+    "elapsed_ms": 10549
   },
   "trace": [
     {
@@ -39,9 +38,9 @@
       "action": "search",
       "args": {
         "query": "远程办公",
-        "top_k": 8
+        "top_k": 5
       },
-      "reason": "直接检索“远程办公”关键词，找相关制度",
+      "reason": "用户问每周可远程办公天数，先用制度可能使用的\"远程办公\"关键词检索。",
       "ok": false,
       "observation": "失败 ServiceUnavailable（可重试）：search 服务暂时不可用（注入故障，第 1 次调用）",
       "kind": "business",
@@ -54,9 +53,9 @@
       "action": "search",
       "args": {
         "query": "居家办公 天数 每周",
-        "top_k": 8
+        "top_k": 5
       },
-      "reason": "换用制度原文可能出现的“居家办公”等词补充检索",
+      "reason": "同时用同义表述\"居家办公\"尝试命中制度原文。",
       "ok": false,
       "observation": "失败 ServiceUnavailable（可重试）：search 服务暂时不可用（注入故障，第 2 次调用）",
       "kind": "business",
@@ -68,9 +67,9 @@
       "turn": 2,
       "action": "browse",
       "args": {
-        "path": ""
+        "path": "制度"
       },
-      "reason": "search 连续失败，改用目录浏览定位考勤/办公方式相关制度",
+      "reason": "检索服务故障，改用按目录浏览定位人事/行政类制度中关于远程办公的规定。",
       "ok": false,
       "observation": "失败 ServiceUnavailable（可重试）：browse 服务暂时不可用（注入故障，第 1 次调用）",
       "kind": "business",
@@ -84,7 +83,7 @@
       "args": {
         "path": ""
       },
-      "reason": "browse 首次失败为可重试故障，重试根目录浏览",
+      "reason": "browse 首次失败提示可重试，再试一次根目录以定位制度目录结构。",
       "ok": false,
       "observation": "失败 ServiceUnavailable（可重试）：browse 服务暂时不可用（注入故障，第 2 次调用）",
       "kind": "business",
@@ -93,13 +92,13 @@
     },
     {
       "step": 5,
-      "turn": 3,
+      "turn": 4,
       "action": "search",
       "args": {
-        "query": "远程办公 居家",
-        "top_k": 8
+        "query": "远程办公 每周 天数",
+        "top_k": 5
       },
-      "reason": "search 前次为可重试故障，换关键词重试",
+      "reason": "search 连续两次 ServiceUnavailable 但标注可重试，做最后一次重试以免直接放弃。",
       "ok": false,
       "observation": "失败 ServiceUnavailable（可重试）：search 服务暂时不可用（注入故障，第 3 次调用）",
       "kind": "business",
@@ -111,53 +110,23 @@
       "turn": 4,
       "action": "browse",
       "args": {
-        "path": "制度/人事"
+        "path": "制度/行政"
       },
-      "reason": "确认 browse 服务是否整体不可用，尝试定位人事制度目录",
+      "reason": "同时对行政条线做最后一次浏览尝试，远程办公规定通常归在行政或人事制度中。",
       "ok": false,
       "observation": "失败 ServiceUnavailable（可重试）：browse 服务暂时不可用（注入故障，第 3 次调用）",
-      "kind": "business",
-      "elapsed_ms": 0,
-      "next_action": "search"
-    },
-    {
-      "step": 7,
-      "turn": 4,
-      "action": "search",
-      "args": {
-        "query": "考勤",
-        "top_k": 5
-      },
-      "reason": "换更基础的“考勤”关键词，测试 search 是否恢复",
-      "ok": false,
-      "observation": "失败 ServiceUnavailable（可重试）：search 服务暂时不可用（注入故障，第 4 次调用）",
-      "kind": "business",
-      "elapsed_ms": 0,
-      "next_action": "search"
-    },
-    {
-      "step": 8,
-      "turn": 5,
-      "action": "search",
-      "args": {
-        "query": "灵活办公 办公地点 申请",
-        "top_k": 5
-      },
-      "reason": "最后一次探测 search 是否恢复，避免仅因短暂故障就放弃作答",
-      "ok": false,
-      "observation": "失败 ServiceUnavailable（可重试）：search 服务暂时不可用（注入故障，第 5 次调用）",
       "kind": "business",
       "elapsed_ms": 0,
       "next_action": "finish"
     },
     {
-      "step": 9,
-      "turn": 6,
+      "step": 7,
+      "turn": 5,
       "action": "finish",
       "args": {
         "status": "tool_error"
       },
-      "reason": "检索与浏览服务持续故障，无法取得任何原文证据，按 tool_error 结束并说明缺口，避免凭常识编造天数。",
+      "reason": "search 与 browse 各重试 3 次均因服务不可用失败，无法读到任何原文，按工具故障结束并说明缺口。",
       "ok": true,
       "observation": "闸门通过，状态 tool_error，有效引用 0 条",
       "kind": "terminal",

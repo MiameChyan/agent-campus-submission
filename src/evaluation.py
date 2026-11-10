@@ -8,6 +8,8 @@
   conflict_docs           这些文档必须出现在 conflicts 中
   answer_contains_any     answer 至少包含其中一个
   answer_not_contains     answer 不能包含其中任何一个
+  answer_contains_all     answer 必须包含其中每一个（如明确答案的关键条件）
+  answer_must_match       {名称: [正则...]}，每一组至少匹配一个（如“请求确认适用制度”）
   question_contains_any   追问内容至少包含其中一个
   conclusion_contains_any 结论（answer 第一行）至少包含其中一个
   conclusion_not_contains 结论（answer 第一行）不能包含其中任何一个（答案后文可以引述/警示，如注入文本）
@@ -35,7 +37,8 @@ def check_expect(expect: dict, result: dict) -> list[dict]:
     question = result.get("clarifying_question") or ""
     used = set((result.get("stats") or {}).get("tool_calls_by_name", {}))
     # 结论 = 答案第一行（提示词要求先给结论），去掉 Markdown 加粗
-    conclusion = answer.strip().splitlines()[0].replace("**", "") if answer.strip() else ""
+    # 模型偶尔输出字面的反斜杠加 n（转义了两次），按换行处理
+    conclusion = answer.replace("\\n", "\n").strip().splitlines()[0].replace("**", "") if answer.strip() else ""
 
     def run(exp: dict, prefix: str = ""):
         for key, val in exp.items():
@@ -52,6 +55,12 @@ def check_expect(expect: dict, result: dict) -> list[dict]:
                 add(name, set(val) <= conflict_docs, f"冲突文档 {sorted(conflict_docs)}，需包含 {val}")
             elif key == "answer_contains_any":
                 add(name, any(v in answer for v in val), f"answer 需包含其一 {val}")
+            elif key == "answer_contains_all":
+                miss = [v for v in val if v not in answer]
+                add(name, not miss, f"answer 需包含全部 {val}" + (f"，缺少 {miss}" if miss else ""))
+            elif key == "answer_must_match":
+                for label, pats in val.items():
+                    add(f"{name}[{label}]", any(re.search(p_, answer) for p_ in pats), f"answer 需体现：{label}")
             elif key == "answer_not_contains":
                 hit = [v for v in val if v in answer]
                 add(name, not hit, f"answer 不得包含 {val}" + (f"，实际出现 {hit}" if hit else ""))

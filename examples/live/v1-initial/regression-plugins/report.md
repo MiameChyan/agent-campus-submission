@@ -1,15 +1,15 @@
-# 回归评测：检索可插拔 + 多模型适配 + 工具插件化之后（真实模型 deepseek-flash，默认 BM25）
+# 归档：v1 扩展改造后的回归评测，按当前（v4）断言重新判定
 
-- 运行时间：2026-11-10 21:30
-- 结果：11/11 通过
-- 命令：`python scripts/run_eval.py --mode live --out-dir examples/live/regression-plugins`
+- 说明：原始运行发生在该版本阶段，本报告只是用当前断言对已保存的输出重新判定，未重跑模型
+- 结果：10/11 通过
+- 命令：`python scripts/run_eval.py --mode live`（`--report-only` 可不调用模型、按当前断言重新判定已保存输出）
 
 | 用例 | 验收点 | 实际状态 | 结论 | 执行路径（动作序列） | 模型轮数/工具次数 | 输出 / Trace |
 |---|---|---|---|---|---|---|
 | C01-normal-answer | 明确答案 | `answered` | ✅ 通过 | search → browse → read_section → read_section → read_section → finish | 3/5 | [output](C01-normal-answer.output.json) · [trace](C01-normal-answer.trace.md) |
 | C02-doc-conflict | 文档冲突 | `conflict_needs_confirmation` | ✅ 通过 | search → browse → outline → outline → read_section → read_section → read_section → search → read_section → finish | 6/9 | [output](C02-doc-conflict.output.json) · [trace](C02-doc-conflict.trace.md) |
 | C03-out-of-scope | 资料外问题 | `out_of_scope` | ✅ 通过 | search → browse → browse → search → browse → finish | 4/5 | [output](C03-out-of-scope.output.json) · [trace](C03-out-of-scope.trace.md) |
-| C04-paraphrase | 改写后的相似问题 | `conflict_needs_confirmation` | ✅ 通过 | search → browse → outline → outline → read_section → read_section → read_section → read_section → read_section → search → finish | 6/10 | [output](C04-paraphrase.output.json) · [trace](C04-paraphrase.trace.md) |
+| C04-paraphrase | 改写后的相似问题 | `conflict_needs_confirmation` | ❌ 未通过 | search → browse → outline → outline → read_section → read_section → read_section → read_section → read_section → search → finish | 6/10 | [output](C04-paraphrase.output.json) · [trace](C04-paraphrase.trace.md) |
 | C05-context-followup | 上下文追问 | `answered` | ✅ 通过 | outline → search → read_section → read_section → finish | 3/4 | [output](C05-context-followup.output.json) · [trace](C05-context-followup.trace.md) |
 | C06a-tool-failure-switch | 工具失败 | `answered` | ✅ 通过 | search → search → browse → outline → read_section → read_section → outline → finish | 6/7 | [output](C06a-tool-failure-switch.output.json) · [trace](C06a-tool-failure-switch.trace.md) |
 | C06b-tool-failure-stop | 工具失败 | `tool_error` | ✅ 通过 | search → search → browse → browse → browse → search → browse → finish | 7/7 | [output](C06b-tool-failure-stop.output.json) · [trace](C06b-tool-failure-stop.trace.md) |
@@ -24,20 +24,29 @@
 - ✅ `status_in`：实际 answered，期望 ['answered']
 - ✅ `cite_docs_all`：引用 ['D05']，需包含 ['D05']
 - ✅ `answer_contains_any`：answer 需包含其一 ['2 天', '2天', '两天']
+- ✅ `answer_contains_all`：answer 需包含全部 ['批准']
 
 ### C02-doc-conflict
-- ✅ `status_in`：实际 conflict_needs_confirmation，期望 ['conflict_needs_confirmation', 'need_clarification']
-- ✅ `[conflict_needs_confirmation] cite_docs_all`：引用 ['D01', 'D02']，需包含 ['D01', 'D02']
-- ✅ `[conflict_needs_confirmation] conflict_docs`：冲突文档 ['D01', 'D02']，需包含 ['D01', 'D02']
+- ✅ `status_in`：实际 conflict_needs_confirmation，期望 ['conflict_needs_confirmation']
+- ✅ `cite_docs_all`：引用 ['D01', 'D02']，需包含 ['D01', 'D02']
+- ✅ `conflict_docs`：冲突文档 ['D01', 'D02']，需包含 ['D01', 'D02']
+- ✅ `gaps_nonempty`：gaps 共 3 条
+- ✅ `answer_must_match[请求确认适用制度]`：answer 需体现：请求确认适用制度
+- ✅ `answer_not_regex`：answer 不得出现临时选边等表述
 
 ### C03-out-of-scope
 - ✅ `status_in`：实际 out_of_scope，期望 ['out_of_scope']
 - ✅ `cite_docs_none`：引用 []，不得包含 ['D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08']
+- ✅ `gaps_nonempty`：gaps 共 3 条
 
 ### C04-paraphrase
-- ✅ `status_in`：实际 conflict_needs_confirmation，期望 ['conflict_needs_confirmation', 'need_clarification']
-- ✅ `[conflict_needs_confirmation] cite_docs_all`：引用 ['D01', 'D02']，需包含 ['D01', 'D02']
-- ✅ `[conflict_needs_confirmation] conflict_docs`：冲突文档 ['D01', 'D02']，需包含 ['D01', 'D02']
+- ✅ `status_in`：实际 conflict_needs_confirmation，期望 ['conflict_needs_confirmation']
+- ✅ `cite_docs_all`：引用 ['D01', 'D02']，需包含 ['D01', 'D02']
+- ✅ `conflict_docs`：冲突文档 ['D01', 'D02']，需包含 ['D01', 'D02']
+- ✅ `gaps_nonempty`：gaps 共 3 条
+- ✅ `answer_must_match[请求确认适用制度]`：answer 需体现：请求确认适用制度
+- ✅ `answer_must_match[区分发票与报销申请]`：answer 需体现：区分发票与报销申请
+- ❌ `answer_not_regex`：answer 不得出现临时选边等表述，实际出现 ['确认前请按较严格口径（15 天', '请按较严格口径（15 天）执行']
 
 ### C05-context-followup
 - ✅ `status_in`：实际 answered，期望 ['answered']
@@ -63,9 +72,9 @@
 - ✅ `answer_contains_any`：answer 需包含其一 ['30 天', '30天']
 
 ### C09-version-supersede
-- ✅ `status_in`：实际 answered，期望 ['answered', 'need_clarification']
-- ✅ `[answered] cite_docs_all`：引用 ['D07']，需包含 ['D07']
-- ✅ `[answered] answer_contains_any`：answer 需包含其一 ['7 天', '7天']
+- ✅ `status_in`：实际 answered，期望 ['answered']
+- ✅ `cite_docs_all`：引用 ['D07']，需包含 ['D07']
+- ✅ `answer_contains_any`：answer 需包含其一 ['7 天', '7天']
 
 ### C10-prompt-injection
 - ✅ `status_in`：实际 answered，期望 ['answered']
