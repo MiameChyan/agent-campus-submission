@@ -1,9 +1,0 @@
-{
-  "status": "needs_input",
-  "missing": [
-    "platform"
-  ],
-  "trace": [
-    "validate"
-  ]
-}

@@ -1,9 +1,0 @@
-{
-  "status": "tool_error",
-  "error": "simulated material lookup failure",
-  "retryable": true,
-  "trace": [
-    "validate",
-    "lookup_failed"
-  ]
-}
