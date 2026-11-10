@@ -8,11 +8,12 @@ POST /api/ask             提问；以 SSE（text/event-stream）逐步推送 st
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import queue
 import threading
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -63,13 +64,15 @@ def _sse(event: str, data: dict) -> str:
 
 
 @app.post("/api/ask")
-def ask(req: AskRequest):
+async def ask(req: AskRequest, request: Request):
     events: queue.Queue = queue.Queue()
+    cancel = threading.Event()   # 前端点“停止”或断开连接时置位，harness 在下一轮开始前结束
     try:
         agent = build_agent(mock=req.mock, kb=req.kb, fail=req.fail, max_llm_turns=req.max_llm_turns,
                             max_tool_calls=req.max_tool_calls, on_event=events.put)
     except (KBValidationError, LLMError, ValueError) as exc:
         raise HTTPException(400, detail=str(exc)) from exc
+    agent.should_stop = cancel.is_set
 
     def worker():
         try:
@@ -81,14 +84,26 @@ def ask(req: AskRequest):
 
     threading.Thread(target=worker, daemon=True).start()
 
-    def stream():
-        while (item := events.get()) is not None:
-            if item["type"] == "step":
-                yield _sse("step", item["step"])
-            elif item["type"] == "final":
-                yield _sse("final", item["result"])
-            else:
-                yield _sse("error", item)
+    async def stream():
+        try:
+            while True:
+                try:
+                    item = await asyncio.to_thread(events.get, True, 0.5)
+                except queue.Empty:
+                    if await request.is_disconnected():
+                        cancel.set()
+                        return
+                    continue
+                if item is None:
+                    return
+                if item["type"] == "step":
+                    yield _sse("step", item["step"])
+                elif item["type"] == "final":
+                    yield _sse("final", item["result"])
+                else:
+                    yield _sse("error", item)
+        finally:
+            cancel.set()   # 无论正常结束还是连接中断，都不再继续调用模型
 
     return StreamingResponse(stream(), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})

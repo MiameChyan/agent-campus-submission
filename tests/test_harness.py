@@ -152,3 +152,13 @@ def test_history_is_included(make_agent):
                                                   "citations": [{"doc_id": "D07", "section_id": "s1"}]}])
     user = llm.contexts[0][1]["content"]
     assert "【对话历史】" in user and "D07#s1" in user and user.endswith("【当前问题】那满 10 年呢？")
+
+
+def test_should_stop_cancels_between_turns(make_agent):
+    llm = ScriptedLLM([[("search", {"query": "报销", "top_k": 3, **R})], [("search", {"query": "x", "top_k": 3, **R})]])
+    calls = iter([False, True])
+    agent = make_agent(llm)
+    agent.should_stop = lambda: next(calls)
+    res = agent.run("q")
+    assert res["status"] == "cancelled" and res["stats"]["llm_turns"] == 1
+    assert res["trace"][-1]["action"] == "(cancelled)"

@@ -49,8 +49,10 @@ class Agent:
         faults: FaultInjector | None = None,
         on_event: EventCallback | None = None,
         kb_label: str = "data/kb",
+        should_stop: Callable[[], bool] | None = None,
     ):
         self.llm, self.kb = llm, kb
+        self.should_stop = should_stop or (lambda: False)   # 用户取消（如前端点“停止”、连接断开）
         self.max_llm_turns, self.max_tool_calls = max_llm_turns, max_tool_calls
         self.faults = faults or FaultInjector()
         self.on_event = on_event or (lambda e: None)
@@ -76,6 +78,11 @@ class Agent:
             return step
 
         while outcome is None:
+            # ---- 用户取消：在轮与轮之间检查（进行中的模型请求无法中断）----
+            if self.should_stop():
+                outcome = {"status": "cancelled", "answer": "", "gaps": ["用户已停止本次回答"]}
+                add_step(action="(cancelled)", args={}, reason="", ok=False, observation="用户停止，本轮结束")
+                break
             # ---- 预算检查：轮数 ----
             if state.llm_turns >= state.max_llm_turns:
                 outcome = self._incomplete("llm_turns_exhausted", state)

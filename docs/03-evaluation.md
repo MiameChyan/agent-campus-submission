@@ -2,7 +2,7 @@
 
 验证分三层：① 自动化测试验证机制（不调用模型）；② 离线 Mock 跑全部用例，验证流程；③ 真实模型 `deepseek-flash` 跑全部用例，验证决策效果。**只有第 ③ 层能说明模型的决策质量。**
 
-## 1. 自动化测试：56/56 通过
+## 1. 自动化测试：57/57 通过
 
 命令 `python -m pytest -v`，实际输出见 [examples/test-results.txt](../examples/test-results.txt)。
 
@@ -10,7 +10,7 @@
 |---|---|
 | `tests/test_kb.py`（10） | 加载、L0/L1/L2 访问、检索排序、路径前缀；校验能一次报出全部问题（死链、日期格式、ID 重复、替代关系不一致）；修改文档后下次加载即生效；`check` 命令退出码 |
 | `tests/test_tools_and_gate.py`（11） | 所有工具 schema 符合 strict 要求；故障注入（失败 N 次后恢复 / 一直失败）；NotFound 不可重试；闸门：接受逐字引用，拒绝未读小节、改写过的 quote、只依据已废止文档的回答、单方冲突 |
-| `tests/test_harness.py`（15） | 用 ScriptedLLM 逐轮驱动：正常循环；状态栏是临时消息且内容实时更新；闸门退回后模型可修正；**工具失败不自动重试**；轮数上限 / 工具次数上限 / 闸门连续退回 → `incomplete`；`ask_user`；`model_error`；只输出文本不被采纳；重复调用提示；并行调用 + 非法 JSON；`reasoning_content` 原样回传；对话历史注入 |
+| `tests/test_harness.py`（16） | 用 ScriptedLLM 逐轮驱动：正常循环；用户取消（`cancelled`）；状态栏是临时消息且内容实时更新；闸门退回后模型可修正；**工具失败不自动重试**；轮数上限 / 工具次数上限 / 闸门连续退回 → `incomplete`；`ask_user`；`model_error`；只输出文本不被采纳；重复调用提示；并行调用 + 非法 JSON；`reasoning_content` 原样回传；对话历史注入 |
 | `tests/test_cli_mock.py`（10） | CLI + MockLLM 端到端：三种状态、知识库变体、故障注入、输入文件与输出文件、非法输入与非法知识库的退出码 2 |
 | `tests/test_api.py`（5） | 健康检查、知识库目录、SSE 先推送 step 再推送 final、变体与故障参数、请求校验 |
 | `tests/test_evaluation.py`（5） | 断言逻辑本身（结论按第一行判定、条件断言、未知检查项报错），包含两次断言误判的回归测试 |

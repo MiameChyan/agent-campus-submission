@@ -59,7 +59,7 @@ flowchart TD
 | 对话历史以文本放进 user 消息 | 避免伪造不含 `reasoning_content` 的 assistant 历史消息 | 历史中不保留上一轮的工具细节，只保留答案和引用 ID |
 | **放弃向量检索（Milvus + embedding）** | ① 太重：评审需要部署 Milvus 并另外申请 embedding 密钥，复现门槛高；② 8 篇文档的规模下召回收益很小；③ 本题难点是冲突与版本，依赖结构化元数据而不是语义相似度；④ 改写问题由模型改写查询或目录导航解决 | 同义词召回依赖模型改写；`search` 接口保持 add/build/search，可替换为 Milvus + bge-m3 |
 | 启动时从 Markdown 构建索引，不持久化 | 修改文档后下次运行即生效（审核要点“替换文档内容”零成本）；同时做强校验 | 大规模知识库时启动慢，需要增量索引 |
-| CLI 为主入口，HTTP + 前端为演示 | 一条命令即可复现；前端只做提问、实时轨迹、结果三块 | 前端没有知识库编辑 |
+| CLI 为主入口，HTTP + 前端为演示 | 一条命令即可复现；前端按 ChatGPT / DeepSeek 的对话形态做，功能保持精简：对话列表、可折叠的检索过程、Markdown 回答、引用卡片、停止 | 没有知识库编辑、重新生成、主题切换；变体库与故障注入只在 CLI 中演示 |
 
 ## 模块
 
@@ -72,8 +72,8 @@ flowchart TD
 | 工具 | `src/tools/registry.py`、`faults.py` | 7 个工具的 strict schema、执行与错误转换、故障注入 |
 | 知识库 | `src/kb/store.py`、`retriever.py` | 加载、校验（必填字段、ID 唯一、替代关系双向一致、链接无死链、日期格式）、L0/L1/L2、BM25 |
 | 模型 | `src/llm/deepseek.py`、`mock.py` | DeepSeek 接入；离线 MockLLM（规则）；ScriptedLLM（测试） |
-| 入口 | `src/main.py`、`src/server.py`、`frontend/` | CLI；FastAPI SSE；Vue3 单页 |
+| 入口 | `src/main.py`、`src/server.py`、`frontend/` | CLI；FastAPI SSE（客户端断开时通过 should_stop 取消）；React 对话界面 |
 
 ## 依赖与版本
 
-openai 2.x（OpenAI 兼容协议调用 DeepSeek）、jieba 0.42（分词）、PyYAML（front matter）、python-dotenv、FastAPI 0.128 + uvicorn（演示 API）、pytest 7.4；前端 Vue 3.5 + Vite 6。没有使用任何 Agent 框架。
+openai 2.x（OpenAI 兼容协议调用 DeepSeek）、jieba 0.42（分词）、PyYAML（front matter）、python-dotenv、FastAPI 0.128 + uvicorn（演示 API）、pytest 7.4；前端 React 19 + TypeScript + react-router 7 + zustand 5（对话持久化到 localStorage）+ react-markdown（不渲染原始 HTML）+ Vite 8。没有使用任何 Agent 框架。
