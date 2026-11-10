@@ -107,33 +107,13 @@ cd frontend && npm install && npm run dev
 
 | 检查项 | 入口 |
 |---|---|
-| 业务目标、范围、任务状态定义 | [需求说明](docs/01-requirements.md) |
-| 调用流程、动态决策、技术取舍 | [方案设计](docs/02-solution.md) |
-| 不同工具结果下的两条执行路径 | [C02 冲突待确认](examples/live/C02-doc-conflict.trace.md)、[C08 替换文档后直接回答](examples/live/C08-kb-replaced.trace.md)、[C06a 检索失败后改用目录浏览](examples/live/C06a-tool-failure-switch.trace.md) |
-| 测试预期、实际结果、失败与限制 | [测试与评估](docs/03-evaluation.md) |
-| 真实模型评测（11/11 通过） | [评测报告](examples/live/report.md) |
-| 关键用例稳定性（9/9 通过） | [稳定性复跑报告](examples/live/stability/report.md) |
-| 扩展改造后的回归（11/11 通过） | [回归评测报告](examples/live/regression-plugins/report.md) |
-| 离线 Mock（只证明流程） | [Mock 评测报告](examples/mock/report.md) |
-| 用例输入与预期 | [用例目录](examples/cases/) |
-| 自动化测试（88/88 通过） | [测试记录](examples/test-results.txt) |
-| 检索可插拔、多模型适配、工具热加载 | [方案设计 · 可扩展性](docs/02-solution.md#可扩展性) |
-| 知识库格式与新增文档 | [方案设计 · 知识库格式](docs/02-solution.md#知识库格式与新增文档) |
-| AI 辅助边界 | [AI 使用说明](docs/04-ai-usage.md) |
-| 不足、实际用时与下一步 | [复盘](docs/05-retrospective.md) |
+| 业务目标 | [需求](docs/01-requirements.md) |
+| 流程与调用链 | [方案](docs/02-solution.md) |
+| 测试、预期、结果 | [评估](docs/03-evaluation.md) |
+| AI 辅助边界 | [AI 使用](docs/04-ai-usage.md) |
+| 不足及改进 | [复盘](docs/05-retrospective.md) |
 
-题目的 6 个验收点与用例的对应关系：
-
-| 验收点 | 用例 | 真实模型的表现 |
-|---|---|---|
-| 明确答案 | C01、C08 | 引用远程办公制度、报销制度回答 |
-| 文档冲突 | C02、C09 | 报销期限冲突时请求确认，不擅自回答 15 天；年假新旧版本冲突时查到替代关系，按 2025 版回答 |
-| 资料外问题 | C03 | 返回超出资料范围，不用常识补全 |
-| 改写后的相似问题 | C04 | 改写检索词并查证后，结论与 C02 一致 |
-| 上下文追问 | C05 | 结合上一轮对话，回答“满 10 年 12 天” |
-| 工具失败 | C06a、C06b | 检索失败时改用目录浏览完成；全部工具失败时如实返回失败 |
-
-另有 C07（执行上限）、C08（替换文档）、C10（文档中的注入文本）三个补充用例。每个用例的输入、真实输出和逐步执行记录都在 `examples/` 下。
+运行输出中的 `trace` 逐步记录模型选择的动作、参数、返回摘要和决策依据；`citations` 引用 `data/kb/` 中的文档编号、小节和原文片段。`examples/live/` 下是真实模型的实际运行结果，`examples/mock/` 下是离线 Mock 的结果，不是真实模型调用记录。
 
 ## 提交约定
 
