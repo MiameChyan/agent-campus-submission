@@ -74,6 +74,37 @@ flowchart TD
 | 模型 | `src/llm/providers.py`、`openai_compat.py`、`mock.py` | 提供方配置 + 通用 OpenAI 兼容适配器；离线 MockLLM（规则）；ScriptedLLM（测试） |
 | 入口 | `src/main.py`、`src/server.py`、`frontend/` | CLI；FastAPI SSE（客户端断开时通过 should_stop 取消）；React 对话界面 |
 
+## 知识库格式与新增文档
+
+```text
+data/kb/
+├── 制度/
+│   ├── 财务/   D01 费用报销制度、D02 报销管理补充通知
+│   ├── 人事/   D03 年假制度（2023 版，已废止）、D07 年假制度（2025 版）、D05 远程办公制度
+│   └── 行政/   D06 办公设备申领规定
+└── 产品/星剪App/   D04 常见问题、D08 使用技巧（含一段模拟的注入文本）
+```
+
+每篇文档是一个 Markdown 文件：开头的元数据写明文档编号、版本日期、状态（现行/已废止）、适用范围和替代关系，正文按 `##` 分成小节；每个目录下的 `_dir.md` 提供该目录的一句话摘要（L0）与概览（L1）。
+
+知识导入默认已经完成：本项目不解析 PDF/Word，也不自动生成摘要。新增文档时按下面的模板手写，放进对应目录后运行 `python -m src.kb.check` 校验（必填字段、编号唯一、日期格式、替代关系双向一致、链接无死链）。知识库在每次启动时直接从这些文件构建，修改后下次运行即生效。
+
+```markdown
+---
+doc_id: D09                  # 唯一，形如 D01
+title: 文档标题
+version_date: 2026-01-01     # YYYY-MM-DD
+status: 现行                  # 现行 / 已废止
+scope: 适用范围（没有就写“未注明”）
+supersedes: []               # 本文替代了哪些文档
+superseded_by: null          # 被哪篇替代（必须与对方的 supersedes 对应）
+links: []                    # 相关文档
+abstract: 一句话摘要
+---
+## 第一条 小节标题
+小节原文……
+```
+
 ## 可扩展性
 
 三类常见的扩展都不需要改动 harness 主循环。
@@ -89,7 +120,8 @@ Retriever 协议：index(items) / search(query, top_k)
 └── HybridRetriever                  多路结果按排名 RRF 融合：Σ 1/(k + rank)，不受各路分数量纲影响
 ```
 
-- 由 `RETRIEVER` / `EMBEDDING_PROVIDER` / `VECTOR_STORE` 配置选择，CLI 也可以用 `--retriever` 指定。
+- 由 `RETRIEVER` / `EMBEDDING_PROVIDER` / `VECTOR_STORE` 配置选择，CLI 也可以用 `--retriever` 指定。没有 embedding 密钥时设置 `EMBEDDING_PROVIDER=hash` 可离线跑通流程（哈希向量无语义）；Milvus 需要 `pip install pymilvus` 并设置 `MILVUS_URI`。
+- 新增一种检索方式：实现 `index()` 与 `search()`，在 `retrievers/registry.py` 的 `create_retriever` 中注册。
 - 后端故障（embedding 服务、Milvus 不可用）统一抛出 `RetrieverError`，工具层转成可重试的 `RetrieverUnavailable` 交给模型，由模型决定重试还是改用目录浏览，和工具失败的处理方式一致。
 - 选 RRF 而不是加权分数：BM25 分数与余弦相似度量纲不同，按排名融合不需要调权重。
 
@@ -104,7 +136,7 @@ Retriever 协议：index(items) / search(query, top_k)
 | strict 工具参数校验 | 支持（`/beta` 端点） | 不支持，发送前去掉 `strict` | 不支持 | 支持 |
 | `reasoning_effort` | 支持 | 不发送 | 不发送 | 不发送 |
 
-只有 DeepSeek 用真实密钥跑通过评测；其他提供方按各自的接口文档配置，由单元测试检查请求参数（`tests/test_providers.py`）。
+切换方式：`LLM_PROVIDER` 环境变量或 CLI `--provider` / `--model`。只有 DeepSeek 用真实密钥跑通过评测；其他提供方按各自的接口文档配置，由单元测试检查请求参数（`tests/test_providers.py`）。新增一家 OpenAI 兼容服务，只需要在 `PROVIDERS` 中加一条配置。
 
 ### 工具插件与热加载（`src/tools/plugin.py`、`plugins/`）
 
@@ -112,6 +144,17 @@ Retriever 协议：index(items) / search(query, top_k)
 - **schema 自动生成**：`@tool` 装饰器读取函数的类型注解（`str` / `int` / `float` / `bool` / `list` / `Literal`，`Annotated[类型, "说明"]` 写参数说明），生成满足 strict 要求的 JSON Schema。`reason` 是保留参数名。
 - **热加载**：`PluginRegistry.refresh()` 比较插件目录中文件的名称、修改时间和大小，有变化才重新加载整个目录。CLI 每次运行加载一次；HTTP 服务在每个请求开始时 refresh，修改插件无需重启。
 - **错误隔离**：某个文件语法错误、工具名重复或定义不合法，只会让这个文件不可用，原因记录在 `load_errors` 中（`GET /api/tools`）；插件运行时抛出的异常被包装成 `PluginError` 观察结果交给模型，不会打断主循环。
+- **写法示例**：
+
+  ```python
+  # src/tools/plugins/doc_count.py
+  from typing import Annotated
+  from src.tools.plugin import ToolContext, tool
+
+  @tool(description="统计某种状态的文档数量")
+  def doc_count(ctx: ToolContext, status: Annotated[str, "现行 / 已废止"]) -> dict:
+      return {"count": sum(d.status == status for d in ctx.kb.docs.values())}
+  ```
 - **证据不能伪造**：harness 按返回内容的形状更新证据台账（不再按工具名判断），但只有当插件返回的原文与知识库中对应小节的原文完全一致时，才会记入台账、允许被引用。
 
 ## 依赖与版本
