@@ -1,7 +1,7 @@
 """jieba 分词 + BM25 关键词检索（无向量、无外部服务）。
 
 选择 BM25 而不是向量检索的原因见 docs/02-solution.md：知识库规模小、难点在冲突与版本元数据，
-且评审复现不应依赖 Milvus / embedding 密钥。接口保持 add/build/search，可替换为向量实现。
+且评审复现不应依赖 Milvus / embedding 密钥。实现 retrievers/base.py 中的 Retriever 协议。
 """
 from __future__ import annotations
 
@@ -31,6 +31,8 @@ def tokenize(text: str) -> list[str]:
 
 
 class BM25Retriever:
+    name = "bm25"
+
     def __init__(self, k1: float = 1.5, b: float = 0.75):
         self.k1, self.b = k1, b
         self._ids: list[str] = []
@@ -38,6 +40,12 @@ class BM25Retriever:
         self._lens: list[int] = []
         self._idf: dict[str, float] = {}
         self._avgdl = 0.0
+
+    def index(self, items: list[tuple[str, str]]) -> None:
+        self._ids, self._docs, self._lens = [], [], []
+        for item_id, text in items:
+            self.add(item_id, text)
+        self.build()
 
     def add(self, item_id: str, text: str) -> None:
         toks = tokenize(text)

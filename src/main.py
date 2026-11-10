@@ -17,23 +17,30 @@ from pathlib import Path
 
 from .agent.harness import Agent
 from .agent.trace import render_markdown
-from .config import ROOT, default_budget, resolve_kb
+from .config import ROOT, RetrievalSettings, default_budget, resolve_kb
+from .kb.retrievers import RETRIEVERS, RetrieverError, create_retriever
 from .kb.store import KBValidationError, KnowledgeBase
 from .llm.base import LLMError
+from .llm.openai_compat import create_llm
+from .llm.providers import PROVIDERS
 from .tools.faults import FaultInjector
 
 
 def build_agent(*, mock: bool, kb: str | None, fail: str | None, max_llm_turns: int | None,
-                max_tool_calls: int | None, on_event=None) -> Agent:
+                max_tool_calls: int | None, on_event=None, provider: str | None = None,
+                model: str | None = None, retriever: str | None = None) -> Agent:
+    """组装一次运行：知识库 + 检索器（可插拔）+ 模型（可切换提供方）+ 工具（插件热加载）。"""
     kb_path = resolve_kb(kb)
-    knowledge = KnowledgeBase.load(kb_path)
+    try:
+        knowledge = KnowledgeBase.load(kb_path, retriever=create_retriever(RetrievalSettings.from_env(retriever)))
+    except RetrieverError as exc:
+        raise ValueError(f"检索器初始化失败：{exc}") from exc
     turns, calls = default_budget()
     if mock:
         from .llm.mock import MockLLM
         llm = MockLLM()
     else:
-        from .llm.deepseek import DeepSeekClient
-        llm = DeepSeekClient()
+        llm = create_llm(provider, model)
     try:
         kb_label = Path(kb_path).resolve().relative_to(ROOT).as_posix()
     except ValueError:
@@ -84,6 +91,9 @@ def main(argv=None) -> int:
     parser.add_argument("--mock", action="store_true", help="离线 Mock 模型（只验证流程，不代表真实模型效果）")
     parser.add_argument("--kb", help="知识库目录或变体名（如 no_conflict）")
     parser.add_argument("--fail", help="故障注入，如 search:1 / search:always,browse:always")
+    parser.add_argument("--provider", choices=sorted(PROVIDERS), help="模型提供方，默认取 LLM_PROVIDER（deepseek）")
+    parser.add_argument("--model", help="模型名，默认取提供方配置")
+    parser.add_argument("--retriever", choices=RETRIEVERS, help="检索方式，默认取 RETRIEVER（bm25）")
     parser.add_argument("--max-llm-turns", type=int)
     parser.add_argument("--max-tool-calls", type=int)
     parser.add_argument("--output", help="把结果 JSON 写入文件")
@@ -101,6 +111,9 @@ def main(argv=None) -> int:
             max_llm_turns=args.max_llm_turns or opts.get("max_llm_turns"),
             max_tool_calls=args.max_tool_calls or opts.get("max_tool_calls"),
             on_event=None if args.quiet else _print_event,
+            provider=args.provider or opts.get("provider"),
+            model=args.model or opts.get("model"),
+            retriever=args.retriever or opts.get("retriever"),
         )
     except (OSError, ValueError, KBValidationError, LLMError) as exc:
         print(json.dumps({"status": "invalid_input", "error": str(exc)}, ensure_ascii=False), file=sys.stderr)

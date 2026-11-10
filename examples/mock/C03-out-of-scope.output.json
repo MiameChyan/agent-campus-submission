@@ -5,6 +5,7 @@
   "mode": "offline_mock",
   "model": "mock-policy",
   "kb": "data/kb",
+  "retriever": "bm25",
   "fault_injection": null,
   "answer": "知识库中没有找到与该问题相关的资料，无法回答。",
   "citations": [],

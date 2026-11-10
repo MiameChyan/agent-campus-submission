@@ -82,8 +82,9 @@ def main(argv=None) -> int:
     parser.add_argument("--mode", choices=["live", "mock"], required=True)
     parser.add_argument("--cases", nargs="*", help="只运行指定用例（文件名前缀）")
     parser.add_argument("--report-only", action="store_true", help="不调用模型，用已保存的输出重新判定并生成报告")
+    parser.add_argument("--out-dir", help="输出目录（默认 examples/<mode>），用于保存回归运行而不覆盖原始记录")
     args = parser.parse_args(argv)
-    out_dir = ROOT / "examples" / args.mode
+    out_dir = Path(args.out_dir).resolve() if args.out_dir else ROOT / "examples" / args.mode
     out_dir.mkdir(parents=True, exist_ok=True)
     files = sorted(CASES.glob("*.input.json"))
     if args.cases:

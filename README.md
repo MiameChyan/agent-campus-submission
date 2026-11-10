@@ -72,18 +72,19 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-在 `.env` 中填写 `DEEPSEEK_API_KEY`，其他配置项保持默认即可：
+在 `.env` 中填写 `DEEPSEEK_API_KEY`，其他配置项保持默认即可。常用配置：
 
 | 变量 | 默认值 | 说明 |
 |---|---|---|
 | `DEEPSEEK_API_KEY` | （必填） | DeepSeek 官方 API 密钥 |
-| `DEEPSEEK_BASE_URL` | `https://api.deepseek.com` | 接口地址 |
-| `DEEPSEEK_MODEL` | `deepseek-flash` | 模型（DeepSeek-V4.1-Flash） |
-| `DEEPSEEK_THINKING` | `enabled` | 是否开启思考模式 |
-| `DEEPSEEK_REASONING_EFFORT` | `high` | 思考强度：`low` / `high` / `max` |
-| `LLM_TIMEOUT` | `60` | 单次请求超时（秒） |
+| `LLM_PROVIDER` | `deepseek` | 模型提供方，见下文“扩展” |
+| `LLM_MODEL` | 提供方默认 | 模型名（DeepSeek 默认 `deepseek-flash`，即 V4.1 Flash） |
+| `LLM_THINKING` / `LLM_REASONING_EFFORT` | `enabled` / `high` | 思考模式与思考强度 |
+| `RETRIEVER` | `bm25` | 检索方式：`bm25` / `vector` / `hybrid` |
 | `AGENT_MAX_LLM_TURNS` | `8` | 每个问题最多调用模型的轮数 |
 | `AGENT_MAX_TOOL_CALLS` | `12` | 每个问题最多调用工具的次数 |
+
+完整列表见 [.env.example](.env.example)。早期的 `DEEPSEEK_MODEL`、`DEEPSEEK_THINKING` 等变量名仍然有效。
 
 ### 命令行提问
 
@@ -124,6 +125,8 @@ python -m src.main (--question "问题" | --input 用例.json) [选项]
 | `--mock` | 使用离线 Mock 模型，只验证流程，不代表真实模型的效果 |
 | `--kb` | 知识库目录，或 `data/kb_variants/` 下的变体名，如 `no_conflict` |
 | `--fail` | 模拟工具故障，如 `search:1`（前 1 次失败）、`search:always,browse:always` |
+| `--provider` / `--model` | 切换模型提供方与模型，如 `--provider siliconflow --model Qwen/Qwen3-32B` |
+| `--retriever` | 切换检索方式：`bm25` / `vector` / `hybrid` |
 | `--max-llm-turns` / `--max-tool-calls` | 覆盖默认的执行上限 |
 | `--output` / `--trace-md` | 把结果 JSON / 执行过程的 Markdown 表格写入文件 |
 | `--quiet` | 不在终端打印执行过程 |
@@ -134,7 +137,7 @@ python -m src.main (--question "问题" | --input 用例.json) [选项]
 {
   "question": "那满 10 年呢？",
   "history": [{"question": "我入职 3 年了，年假有几天？", "answer": "7 天", "citations": [{"doc_id": "D07", "section_id": "s1"}]}],
-  "options": {"kb": "no_conflict", "fail": "search:1", "max_llm_turns": 8}
+  "options": {"kb": "no_conflict", "fail": "search:1", "max_llm_turns": 8, "retriever": "hybrid"}
 }
 ```
 
@@ -190,10 +193,63 @@ python -m src.kb.check
 
 校验内容包括：必填字段、编号唯一、日期格式、替代关系双向一致、链接没有指向不存在的文档。知识库在每次启动时从这些文件直接构建，修改后下次运行即生效。
 
+## 扩展
+
+检索方式、模型和工具都可以替换或新增，不需要改动 Agent 主循环。
+
+### 切换检索方式
+
+| `RETRIEVER` | 说明 |
+|---|---|
+| `bm25`（默认） | jieba 分词 + BM25 关键词检索，无需任何外部服务 |
+| `vector` | 向量检索。向量化默认用硅基流动 `BAAI/bge-m3`（需要 `SILICONFLOW_API_KEY`，结果按内容缓存到 `.cache/`）；存储默认在内存中，设置 `VECTOR_STORE=milvus` 和 `MILVUS_URI` 后改用 Milvus（需 `pip install pymilvus`） |
+| `hybrid` | BM25 与向量检索各取一份结果，按排名用 RRF 融合 |
+
+没有 embedding 密钥时，可以设置 `EMBEDDING_PROVIDER=hash`，用离线哈希向量把向量 / 混合检索的流程跑通。哈希向量没有语义能力，只用于验证流程。
+
+```bash
+EMBEDDING_PROVIDER=hash python -m src.main --question "发票最晚多少天内要交？" --retriever hybrid
+```
+
+检索后端出错（如 embedding 服务或 Milvus 不可用）时，工具会返回“检索服务不可用，可重试”，由模型决定重试还是改用目录浏览。新增一种检索方式：实现 `index()` 和 `search()` 两个方法，并在 `src/kb/retrievers/registry.py` 中注册。
+
+### 切换模型
+
+| `LLM_PROVIDER` | 密钥变量 | 状态 |
+|---|---|---|
+| `deepseek`（默认） | `DEEPSEEK_API_KEY` | 已用真实模型完成全部评测 |
+| `siliconflow` | `SILICONFLOW_API_KEY` | 已适配，未用真实密钥验证 |
+| `dashscope`（阿里百炼 / Qwen） | `DASHSCOPE_API_KEY` | 已适配，未用真实密钥验证 |
+| `moonshot`（Kimi） | `MOONSHOT_API_KEY` | 已适配，未用真实密钥验证 |
+| `openai` | `OPENAI_API_KEY` | 已适配，未用真实密钥验证 |
+| `openai_compat`（任意 OpenAI 兼容服务） | `LLM_API_KEY` + `LLM_BASE_URL` + `LLM_MODEL` | 已适配，未用真实密钥验证 |
+
+```bash
+python -m src.main --question "报销期限多久？" --provider siliconflow --model Qwen/Qwen3-32B
+```
+
+各家接口的差异（思考模式怎么开、多轮请求是否必须回传思考内容、是否支持严格参数校验）都写在 `src/llm/providers.py` 的提供方配置里。新增一家 OpenAI 兼容服务，只需要在那里加一条配置。
+
+### 新增工具（热加载）
+
+业务工具都是 `src/tools/plugins/` 下的插件，一个 Python 文件就是一个工具。参数说明由类型注解自动生成：
+
+```python
+# src/tools/plugins/doc_count.py
+from typing import Annotated
+from src.tools.plugin import ToolContext, tool
+
+@tool(description="统计某种状态的文档数量")
+def doc_count(ctx: ToolContext, status: Annotated[str, "现行 / 已废止"]) -> dict:
+    return {"count": sum(d.status == status for d in ctx.kb.docs.values())}
+```
+
+保存后即可生效：命令行每次运行都会重新加载；网页服务在每个请求开始时检查插件目录，有变化就重新加载，不需要重启。某个插件写错了只会让它自己不可用，原因可以通过 `GET /api/tools` 查看。插件返回的原文只有与知识库中的原文完全一致时，才能被当作可引用的证据。
+
 ## 测试与评估
 
 ```bash
-python -m pytest -q                        # 57 个自动化测试，不调用模型
+python -m pytest -q                        # 88 个自动化测试，不调用模型
 python scripts/run_eval.py --mode live     # 用真实模型运行全部 11 个用例并自动判定
 python scripts/run_eval.py --mode mock     # 离线 Mock 运行全部用例
 python scripts/stability.py                # 关键用例重复运行 3 次
@@ -203,7 +259,8 @@ python scripts/stability.py                # 关键用例重复运行 3 次
 |---|---|
 | 真实模型（`deepseek-flash`）验收用例 | 11/11 通过（[报告](examples/live/report.md)） |
 | 关键用例稳定性复跑（C02、C04、C10 各 3 次） | 9/9 通过（[报告](examples/live/stability/report.md)） |
-| 自动化测试 | 57/57 通过（[记录](examples/test-results.txt)） |
+| 扩展（检索可插拔、多模型、工具插件）后的回归 | 11/11 通过（[报告](examples/live/regression-plugins/report.md)） |
+| 自动化测试 | 88/88 通过（[记录](examples/test-results.txt)） |
 | 离线 Mock | 8 个通过，3 个属于 Mock 本身的已知局限（[报告](examples/mock/report.md)） |
 
 用例与题目验收点的对应关系：
@@ -228,9 +285,11 @@ python scripts/stability.py                # 关键用例重复运行 3 次
 │   ├── main.py          命令行入口
 │   ├── server.py        HTTP 接口（逐步推送执行过程，支持停止）
 │   ├── agent/           主循环、状态栏、引用校验、提示词、执行记录
-│   ├── tools/           工具定义、故障模拟
-│   ├── kb/              知识库加载、校验与检索
-│   └── llm/             DeepSeek 接入、离线 Mock 模型
+│   ├── tools/           核心工具、插件机制、故障模拟
+│   │   └── plugins/     业务工具插件（检索、浏览、大纲、读原文），可热加载
+│   ├── kb/              知识库加载与校验
+│   │   └── retrievers/  可插拔检索：BM25、向量（内存 / Milvus）、混合
+│   └── llm/             模型提供方配置、通用适配器、离线 Mock 模型
 ├── frontend/            网页对话界面（React）
 ├── data/                合成知识库与变体库
 ├── examples/            用例输入、真实与 Mock 运行结果、评测报告
@@ -243,16 +302,17 @@ python scripts/stability.py                # 关键用例重复运行 3 次
 
 | 部分 | 选择 | 原因 |
 |---|---|---|
-| 模型 | DeepSeek 官方接口 `deepseek-flash`，开启思考模式 | 支持工具调用和严格参数校验，成本低 |
-| Agent 框架 | 不使用框架，自己实现主循环 | 每一步决策都可见、可测试，便于解释 |
-| 检索 | jieba 分词 + BM25 关键词检索，加目录浏览 | 本题的难点是冲突和版本，而不是语义召回；没有采用向量检索（Milvus + embedding），因为部署太重、复现门槛高，在 8 篇文档的规模下收益也很小 |
+| 模型 | 默认 DeepSeek 官方接口 `deepseek-flash`，开启思考模式；可通过配置切换到其他 OpenAI 兼容服务 | 支持工具调用和严格参数校验，成本低 |
+| Agent 框架 | 不使用框架，自己实现主循环；业务工具做成插件 | 每一步决策都可见、可测试，便于解释；新增工具不需要改主循环 |
+| 检索 | 默认 jieba 分词 + BM25 关键词检索，加目录浏览；向量与混合检索作为可选项 | 本题的难点是冲突和版本，而不是语义召回。向量检索需要 embedding 密钥，用 Milvus 还要额外部署，复现门槛高，在 8 篇文档的规模下收益也很小，所以默认不启用 |
 | 接口 | FastAPI + SSE | 让网页实时显示每一步 |
 | 前端 | React 19 + TypeScript + react-router + zustand + Vite | 对话界面，对话记录保存在浏览器本地 |
 
 ## 已知限制
 
 - 引用校验只检查引用本身是否真实，不检查回答中的每一句话都有出处；模型偶尔会补充一句资料里没有的推断。
-- 关键词检索不理解同义词，需要模型改写检索词或改用目录浏览来弥补。
+- 默认的关键词检索不理解同义词，需要模型改写检索词或改用目录浏览来弥补；向量检索已实现，但没有用真实的 embedding 服务和 Milvus 实例评测过效果。
+- 除 DeepSeek 外的模型提供方只做了适配和单元测试，没有用真实密钥跑过评测。
 - 每个问题大约需要 10–25 秒、1–2.5 万 token；模型倾向于多查几步再回答。
 - 不包含原始文档导入（PDF/Word 解析）、权限控制和会话的服务端持久化。
 

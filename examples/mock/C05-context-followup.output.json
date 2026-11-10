@@ -5,6 +5,7 @@
   "mode": "offline_mock",
   "model": "mock-policy",
   "kb": "data/kb",
+  "retriever": "bm25",
   "fault_injection": null,
   "answer": "员工累计工作满 1 年不满 10 年的，年假 7 天。",
   "citations": [

@@ -5,6 +5,7 @@
   "mode": "offline_mock",
   "model": "mock-policy",
   "kb": "data/kb",
+  "retriever": "bm25",
   "fault_injection": null,
   "answer": "",
   "citations": [],

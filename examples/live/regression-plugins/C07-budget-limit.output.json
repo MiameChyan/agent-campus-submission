@@ -1,0 +1,74 @@
+{
+  "question": "报销期限多久？",
+  "status": "incomplete",
+  "incomplete_reason": "llm_turns_exhausted",
+  "mode": "live",
+  "model": "deepseek-flash",
+  "kb": "data/kb",
+  "retriever": "bm25",
+  "fault_injection": null,
+  "answer": "",
+  "citations": [],
+  "conflicts": [],
+  "gaps": [
+    "达到执行上限，任务未完成；以下为已收集但未形成结论的证据：无"
+  ],
+  "clarifying_question": null,
+  "stats": {
+    "llm_turns": 1,
+    "tool_calls": 2,
+    "tool_calls_by_name": {
+      "search": 1,
+      "browse": 1
+    },
+    "gate_rejections": 0,
+    "budget": {
+      "max_llm_turns": 1,
+      "max_tool_calls": 12
+    },
+    "prompt_tokens": 2194,
+    "completion_tokens": 146,
+    "elapsed_ms": 1544
+  },
+  "trace": [
+    {
+      "step": 1,
+      "turn": 1,
+      "action": "search",
+      "args": {
+        "query": "报销期限",
+        "top_k": 5
+      },
+      "reason": "直接检索“报销期限”相关制度小节",
+      "ok": true,
+      "observation": "“报销期限” 命中 5 条：D01#s3 第三条 报销期限(现行)；D02#s1 一、提交期限(现行)；D02#s2 二、电子发票(现行)；D01#s2 第二条 单据要求(现行)",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "browse"
+    },
+    {
+      "step": 2,
+      "turn": 1,
+      "action": "browse",
+      "args": {
+        "path": "制度/财务"
+      },
+      "reason": "检索命中不确定时先看财务制度目录，确认报销相关文档",
+      "ok": true,
+      "observation": "目录 制度/财务：子目录 无；文档 D01(现行)、D02(现行)",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "(budget)"
+    },
+    {
+      "step": 3,
+      "turn": 1,
+      "action": "(budget)",
+      "args": {},
+      "reason": "",
+      "ok": false,
+      "observation": "模型调用轮数达到上限 1，以未完成状态结束",
+      "next_action": "（结束）"
+    }
+  ]
+}

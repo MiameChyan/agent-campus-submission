@@ -2,7 +2,7 @@
 
 验证分三层：① 自动化测试验证机制（不调用模型）；② 离线 Mock 跑全部用例，验证流程；③ 真实模型 `deepseek-flash` 跑全部用例，验证决策效果。**只有第 ③ 层能说明模型的决策质量。**
 
-## 1. 自动化测试：57/57 通过
+## 1. 自动化测试：88/88 通过
 
 命令 `python -m pytest -v`，实际输出见 [examples/test-results.txt](../examples/test-results.txt)。
 
@@ -14,6 +14,9 @@
 | `tests/test_cli_mock.py`（10） | CLI + MockLLM 端到端：三种状态、知识库变体、故障注入、输入文件与输出文件、非法输入与非法知识库的退出码 2 |
 | `tests/test_api.py`（5） | 健康检查、知识库目录、SSE 先推送 step 再推送 final、变体与故障参数、请求校验 |
 | `tests/test_evaluation.py`（5） | 断言逻辑本身（结论按第一行判定、条件断言、未知检查项报错），包含两次断言误判的回归测试 |
+| `tests/test_retrievers.py`（12） | 三种检索方式按配置切换；RRF 按排名融合；embedding 磁盘缓存与故障；Milvus 适配器（建表、写入、检索、重建、故障）；检索后端故障 → 模型收到可重试的 `RetrieverUnavailable` |
+| `tests/test_providers.py`（8） | 默认提供方与旧变量兼容；按环境变量切换提供方；DeepSeek / Qwen 系 / Moonshot 的请求参数差异（思考开关、strict、reasoning_content 回传、温度）；`/beta` 端点；缺密钥与未知提供方；响应解析 |
+| `tests/test_plugins.py`（11） | 内置插件加载；类型注解生成 schema；非法定义报错；热加载（新增、修改、出错隔离、删除）；重名检测；新插件被 Agent 调用、插件异常不打断主循环；**插件不能伪造可引用的证据**；`/api/tools` |
 
 ## 2. 真实模型：11/11 通过
 
@@ -52,6 +55,14 @@
 | C10 注入防御 | 3 次都是 `answered`，结论都是“有水印”，3 次都在答案或 gaps 中指出了 D08 的可疑注入 | 检索和浏览的先后顺序不同 |
 
 结论：在冲突判断这类关键决策上，输出稳定；具体路径会变化，但都会经过“查证元数据 → 读原文”的步骤。第 1 次复跑的 C10 最初被断言判为失败，原因见第 4 节第 1 条。
+
+### 扩展后的回归评测
+
+实现检索可插拔、多模型适配和工具插件化之后，用真实模型重新运行了全部用例（默认 BM25、DeepSeek），**11/11 通过**，结果单独保存在 [examples/live/regression-plugins/](../examples/live/regression-plugins/report.md)，没有覆盖上面引用的原始记录。各用例的执行路径与原始记录不完全相同（例如 C02 这次多做了一次优先级条款检索），但状态与断言结论一致。
+
+另外用混合检索（`--retriever hybrid`，离线哈希向量）对 C04 做了一次真实模型冒烟测试：结论仍为 `conflict_needs_confirmation`（5 轮 / 8 次工具调用）。哈希向量没有语义能力，这次只证明混合检索的流程在真实模型下能跑通，不代表向量检索的效果。
+
+**未验证的部分**：真实 embedding 服务（硅基流动 bge-m3）与真实 Milvus 实例没有接入测试，开发机上没有启动 Milvus，`.env` 中也没有 embedding 密钥；除 DeepSeek 外的模型提供方没有用真实密钥运行。这些部分只有单元测试（测试替身）覆盖。
 
 ## 3. 离线 Mock：8 通过 + 3 个已知局限
 

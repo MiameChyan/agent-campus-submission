@@ -5,6 +5,7 @@
   "mode": "offline_mock",
   "model": "mock-policy",
   "kb": "data/kb",
+  "retriever": "bm25",
   "fault_injection": null,
   "answer": "经部门负责人批准，员工每周最多可远程办公 2 天。",
   "citations": [

@@ -1,0 +1,118 @@
+{
+  "question": "报销期限多久？",
+  "status": "answered",
+  "incomplete_reason": null,
+  "mode": "live",
+  "model": "deepseek-flash",
+  "kb": "data/kb_variants/no_conflict",
+  "retriever": "bm25",
+  "fault_injection": null,
+  "answer": "报销期限为 **30 天**：员工应在费用发生之日起 30 天内提交报销申请；若逾期提交，须由部门负责人书面说明原因。\n\n依据：《费用报销制度》（D01，2024-03-01，现行）第三条 报销期限。财务目录下目前仅有该一份制度，未发现对报销期限的其他规定或废止版本。",
+  "citations": [
+    {
+      "doc_id": "D01",
+      "section_id": "s3",
+      "title": "费用报销制度",
+      "section_title": "第三条 报销期限",
+      "version_date": "2024-03-01",
+      "doc_status": "现行",
+      "quote": "员工应在费用发生之日起 30 天内提交报销申请，逾期提交须由部门负责人书面说明原因。"
+    }
+  ],
+  "conflicts": [],
+  "gaps": [
+    "D01 元数据中“适用范围”标注为“未注明”，仅能从第一条内容推知适用于员工因公发生的各类费用报销；若存在特殊费用类型（如差旅、采购）的另行规定，知识库中暂无对应文档。"
+  ],
+  "clarifying_question": null,
+  "stats": {
+    "llm_turns": 4,
+    "tool_calls": 4,
+    "tool_calls_by_name": {
+      "search": 1,
+      "read_section": 1,
+      "outline": 1,
+      "browse": 1
+    },
+    "gate_rejections": 0,
+    "budget": {
+      "max_llm_turns": 8,
+      "max_tool_calls": 12
+    },
+    "prompt_tokens": 11623,
+    "completion_tokens": 732,
+    "elapsed_ms": 7507
+  },
+  "trace": [
+    {
+      "step": 1,
+      "turn": 1,
+      "action": "search",
+      "args": {
+        "query": "报销期限",
+        "top_k": 5
+      },
+      "reason": "先按关键词检索报销期限相关制度条款",
+      "ok": true,
+      "observation": "“报销期限” 命中 4 条：D01#s3 第三条 报销期限(现行)；D01#s2 第二条 单据要求(现行)；D01#s1 第一条 适用范围(现行)；D01#s4 第四条 审批流程(现行)",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 2,
+      "turn": 2,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D01",
+        "section_id": "s3"
+      },
+      "reason": "读取费用报销制度第三条报销期限原文以便引用",
+      "ok": true,
+      "observation": "D01#s3（现行）第三条 报销期限：员工应在费用发生之日起 30 天内提交报销申请，逾期提交须由部门负责人书面说明原因。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "outline"
+    },
+    {
+      "step": 3,
+      "turn": 2,
+      "action": "outline",
+      "args": {
+        "doc_id": "D01"
+      },
+      "reason": "查证该制度版本状态与是否有替代关系",
+      "ok": true,
+      "observation": "D01《费用报销制度》现行 2024-03-01 范围:未注明  小节 4 个",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "browse"
+    },
+    {
+      "step": 4,
+      "turn": 3,
+      "action": "browse",
+      "args": {
+        "path": "制度/财务"
+      },
+      "reason": "检查财务目录下是否另有差旅等制度对报销期限作出不同规定，避免遗漏冲突",
+      "ok": true,
+      "observation": "目录 制度/财务：子目录 无；文档 D01(现行)",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "finish"
+    },
+    {
+      "step": 5,
+      "turn": 4,
+      "action": "finish",
+      "args": {
+        "status": "answered"
+      },
+      "reason": "已读取现行制度原文并确认无其他财务制度冲突，可给出明确答案。",
+      "ok": true,
+      "observation": "闸门通过，状态 answered，有效引用 1 条",
+      "kind": "terminal",
+      "next_action": "（结束）"
+    }
+  ]
+}

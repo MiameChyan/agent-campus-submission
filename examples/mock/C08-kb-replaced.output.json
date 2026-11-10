@@ -5,6 +5,7 @@
   "mode": "offline_mock",
   "model": "mock-policy",
   "kb": "data/kb_variants/no_conflict",
+  "retriever": "bm25",
   "fault_injection": null,
   "answer": "员工应在费用发生之日起 30 天内提交报销申请，逾期提交须由部门负责人书面说明原因。",
   "citations": [

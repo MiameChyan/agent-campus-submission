@@ -4,6 +4,7 @@
 
 GET  /api/health          健康检查与当前模型配置
 GET  /api/kb/tree         知识库目录与文档列表（只读）
+GET  /api/tools           当前加载的工具插件与加载错误（插件热加载，修改后无需重启）
 POST /api/ask             提问；以 SSE（text/event-stream）逐步推送 step 事件，最后推送 final 事件
 """
 from __future__ import annotations
@@ -18,9 +19,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from .config import LLMSettings, resolve_kb
+from .config import RetrievalSettings, resolve_kb
 from .kb.store import KBValidationError, KnowledgeBase
 from .llm.base import LLMError
+from .llm.providers import LLMSettings
+from .tools.plugin import default_registry
 from .main import build_agent
 
 app = FastAPI(title="企业知识问答 Agent", version="1.0")
@@ -42,12 +45,21 @@ class AskRequest(BaseModel):
     fail: str | None = None
     max_llm_turns: int | None = Field(default=None, ge=1, le=20)
     max_tool_calls: int | None = Field(default=None, ge=1, le=40)
+    provider: str | None = None
+    model: str | None = None
+    retriever: str | None = None
 
 
 @app.get("/api/health")
 def health():
     s = LLMSettings.from_env()
-    return {"ok": True, "model": s.model, "api_key_configured": bool(s.api_key), "thinking": s.thinking}
+    return {"ok": True, "provider": s.provider.name, "model": s.model, "api_key_configured": bool(s.api_key),
+            "thinking": s.thinking, "retriever": RetrievalSettings.from_env().retriever}
+
+
+@app.get("/api/tools")
+def tools():
+    return default_registry().describe()
 
 
 @app.get("/api/kb/tree")
@@ -69,7 +81,8 @@ async def ask(req: AskRequest, request: Request):
     cancel = threading.Event()   # 前端点“停止”或断开连接时置位，harness 在下一轮开始前结束
     try:
         agent = build_agent(mock=req.mock, kb=req.kb, fail=req.fail, max_llm_turns=req.max_llm_turns,
-                            max_tool_calls=req.max_tool_calls, on_event=events.put)
+                            max_tool_calls=req.max_tool_calls, on_event=events.put,
+                            provider=req.provider, model=req.model, retriever=req.retriever)
     except (KBValidationError, LLMError, ValueError) as exc:
         raise HTTPException(400, detail=str(exc)) from exc
     agent.should_stop = cancel.is_set

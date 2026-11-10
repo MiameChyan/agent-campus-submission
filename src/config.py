@@ -21,24 +21,50 @@ def _int(name: str, default: int) -> int:
         return default
 
 
+def _float(name: str, default: float) -> float:
+    try:
+        return float(os.getenv(name, default))
+    except ValueError:
+        return default
+
+
+def env(*names: str, default: str = "") -> str:
+    """按顺序取第一个非空的环境变量。"""
+    for n in names:
+        v = os.getenv(n)
+        if v:
+            return v
+    return default
+
+
 @dataclass(frozen=True)
-class LLMSettings:
-    api_key: str
-    base_url: str
-    model: str
-    thinking: str           # enabled / disabled
-    reasoning_effort: str   # low / high / max
-    timeout: int
+class RetrievalSettings:
+    retriever: str              # bm25 | vector | hybrid
+    embedding_provider: str     # openai_compat | hash
+    embedding_base_url: str
+    embedding_api_key: str
+    embedding_model: str
+    vector_store: str           # memory | milvus
+    milvus_uri: str
+    milvus_token: str
+    milvus_collection: str
+    vector_min_score: float
+    rrf_k: int
 
     @classmethod
-    def from_env(cls) -> "LLMSettings":
+    def from_env(cls, retriever: str | None = None) -> "RetrievalSettings":
         return cls(
-            api_key=os.getenv("DEEPSEEK_API_KEY", ""),
-            base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com"),
-            model=os.getenv("DEEPSEEK_MODEL", "deepseek-flash"),
-            thinking=os.getenv("DEEPSEEK_THINKING", "enabled"),
-            reasoning_effort=os.getenv("DEEPSEEK_REASONING_EFFORT", "high"),
-            timeout=_int("LLM_TIMEOUT", 60),
+            retriever=retriever or env("RETRIEVER", default="bm25"),
+            embedding_provider=env("EMBEDDING_PROVIDER", default="openai_compat"),
+            embedding_base_url=env("EMBEDDING_BASE_URL", default="https://api.siliconflow.cn/v1"),
+            embedding_api_key=env("EMBEDDING_API_KEY", "SILICONFLOW_API_KEY"),
+            embedding_model=env("EMBEDDING_MODEL", default="BAAI/bge-m3"),
+            vector_store=env("VECTOR_STORE", default="memory"),
+            milvus_uri=env("MILVUS_URI", default="http://localhost:19530"),
+            milvus_token=env("MILVUS_TOKEN"),
+            milvus_collection=env("MILVUS_COLLECTION", default="kbqa_sections"),
+            vector_min_score=_float("VECTOR_MIN_SCORE", 0.0),
+            rrf_k=_int("RRF_K", 60),
         )
 
 

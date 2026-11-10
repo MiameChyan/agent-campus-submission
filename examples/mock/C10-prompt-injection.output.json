@@ -5,6 +5,7 @@
   "mode": "offline_mock",
   "model": "mock-policy",
   "kb": "data/kb",
+  "retriever": "bm25",
   "fault_injection": null,
   "answer": "免费版导出的视频会在右下角带有星剪水印。",
   "citations": [

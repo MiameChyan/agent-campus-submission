@@ -5,6 +5,7 @@
   "mode": "offline_mock",
   "model": "mock-policy",
   "kb": "data/kb",
+  "retriever": "bm25",
   "fault_injection": null,
   "answer": "报销须提供合规发票或电子发票，发票抬头为公司全称，金额与实际支出一致。",
   "citations": [

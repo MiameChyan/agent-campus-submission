@@ -57,7 +57,7 @@ flowchart TD
 | DeepSeek 官方 `deepseek-flash` + 思考模式 | 支持 function calling 和 strict schema；思考模式提升查证质量。注意：带 tools 的请求必须原样回传 `reasoning_content`，否则 400。harness 把整条 assistant 消息追加回上下文 | 每题约 10–25 秒，约 1–2 万输入 token |
 | strict 工具调用（`/beta` 端点） | 参数结构由服务端校验，减少参数缺失 | 仍可能出现非法 JSON（C05 出现过一次），harness 把它作为观察退回，模型下一轮重发 |
 | 对话历史以文本放进 user 消息 | 避免伪造不含 `reasoning_content` 的 assistant 历史消息 | 历史中不保留上一轮的工具细节，只保留答案和引用 ID |
-| **放弃向量检索（Milvus + embedding）** | ① 太重：评审需要部署 Milvus 并另外申请 embedding 密钥，复现门槛高；② 8 篇文档的规模下召回收益很小；③ 本题难点是冲突与版本，依赖结构化元数据而不是语义相似度；④ 改写问题由模型改写查询或目录导航解决 | 同义词召回依赖模型改写；`search` 接口保持 add/build/search，可替换为 Milvus + bge-m3 |
+| **默认不启用向量检索（Milvus + embedding）** | ① 太重：评审需要部署 Milvus 并另外申请 embedding 密钥，复现门槛高；② 8 篇文档的规模下召回收益很小；③ 本题难点是冲突与版本，依赖结构化元数据而不是语义相似度；④ 改写问题由模型改写查询或目录导航解决。向量与混合检索已作为可插拔选项实现（见下文“可扩展性”），默认仍是 BM25 | 默认模式下同义词召回依赖模型改写 |
 | 启动时从 Markdown 构建索引，不持久化 | 修改文档后下次运行即生效（审核要点“替换文档内容”零成本）；同时做强校验 | 大规模知识库时启动慢，需要增量索引 |
 | CLI 为主入口，HTTP + 前端为演示 | 一条命令即可复现；前端按 ChatGPT / DeepSeek 的对话形态做，功能保持精简：对话列表、可折叠的检索过程、Markdown 回答、引用卡片、停止 | 没有知识库编辑、重新生成、主题切换；变体库与故障注入只在 CLI 中演示 |
 
@@ -69,11 +69,51 @@ flowchart TD
 | 状态栏 | `src/agent/status_bar.py` | 渲染动态状态 |
 | 提交闸门 | `src/agent/gate.py` | 引用校验 |
 | 轨迹 | `src/agent/trace.py` | 返回摘要、后续动作、Markdown 渲染 |
-| 工具 | `src/tools/registry.py`、`faults.py` | 7 个工具的 strict schema、执行与错误转换、故障注入 |
-| 知识库 | `src/kb/store.py`、`retriever.py` | 加载、校验（必填字段、ID 唯一、替代关系双向一致、链接无死链、日期格式）、L0/L1/L2、BM25 |
-| 模型 | `src/llm/deepseek.py`、`mock.py` | DeepSeek 接入；离线 MockLLM（规则）；ScriptedLLM（测试） |
+| 工具 | `src/tools/registry.py`、`plugin.py`、`plugins/`、`faults.py` | 3 个核心工具（计划、追问、提交）+ 插件业务工具；schema 自动生成、热加载、错误转换、故障注入 |
+| 知识库 | `src/kb/store.py`、`retrievers/` | 加载、校验（必填字段、ID 唯一、替代关系双向一致、链接无死链、日期格式）、L0/L1/L2；检索器可插拔（BM25 / 向量 / 混合） |
+| 模型 | `src/llm/providers.py`、`openai_compat.py`、`mock.py` | 提供方配置 + 通用 OpenAI 兼容适配器；离线 MockLLM（规则）；ScriptedLLM（测试） |
 | 入口 | `src/main.py`、`src/server.py`、`frontend/` | CLI；FastAPI SSE（客户端断开时通过 should_stop 取消）；React 对话界面 |
+
+## 可扩展性
+
+三类常见的扩展都不需要改动 harness 主循环。
+
+### 检索可插拔（`src/kb/retrievers/`）
+
+```
+Retriever 协议：index(items) / search(query, top_k)
+├── BM25Retriever                    默认；jieba + BM25
+├── VectorRetriever(Embedder, VectorStore)
+│     Embedder：OpenAICompatEmbedder（硅基流动 bge-m3，按内容哈希缓存到磁盘）| HashEmbedder（离线，无语义）
+│     VectorStore：MemoryVectorStore（默认）| MilvusVectorStore（pymilvus MilvusClient，COSINE）
+└── HybridRetriever                  多路结果按排名 RRF 融合：Σ 1/(k + rank)，不受各路分数量纲影响
+```
+
+- 由 `RETRIEVER` / `EMBEDDING_PROVIDER` / `VECTOR_STORE` 配置选择，CLI 也可以用 `--retriever` 指定。
+- 后端故障（embedding 服务、Milvus 不可用）统一抛出 `RetrieverError`，工具层转成可重试的 `RetrieverUnavailable` 交给模型，由模型决定重试还是改用目录浏览，和工具失败的处理方式一致。
+- 选 RRF 而不是加权分数：BM25 分数与余弦相似度量纲不同，按排名融合不需要调权重。
+
+### 多模型适配（`src/llm/providers.py`、`openai_compat.py`）
+
+各家 OpenAI 兼容接口的差异集中在 `ProviderProfile` 中，`OpenAICompatClient` 按配置组装请求：
+
+| 差异 | DeepSeek | Qwen 系（硅基流动 / 百炼） | Moonshot | OpenAI |
+|---|---|---|---|---|
+| 思考模式开关 | `extra_body.thinking` | `extra_body.enable_thinking` | 无 | 无 |
+| 多轮回传 `reasoning_content` | 必须（否则 400） | 不需要，发送前去掉 | 不需要 | 不需要 |
+| strict 工具参数校验 | 支持（`/beta` 端点） | 不支持，发送前去掉 `strict` | 不支持 | 支持 |
+| `reasoning_effort` | 支持 | 不发送 | 不发送 | 不发送 |
+
+只有 DeepSeek 用真实密钥跑通过评测；其他提供方按各自的接口文档配置，由单元测试检查请求参数（`tests/test_providers.py`）。
+
+### 工具插件与热加载（`src/tools/plugin.py`、`plugins/`）
+
+- **核心工具与业务工具分开**：`update_plan`、`ask_user`、`finish` 与主循环的结束逻辑和提交闸门绑定，留在代码里；检索、浏览、大纲、读原文这类“参数 → JSON”的业务工具放到插件目录。
+- **schema 自动生成**：`@tool` 装饰器读取函数的类型注解（`str` / `int` / `float` / `bool` / `list` / `Literal`，`Annotated[类型, "说明"]` 写参数说明），生成满足 strict 要求的 JSON Schema。`reason` 是保留参数名。
+- **热加载**：`PluginRegistry.refresh()` 比较插件目录中文件的名称、修改时间和大小，有变化才重新加载整个目录。CLI 每次运行加载一次；HTTP 服务在每个请求开始时 refresh，修改插件无需重启。
+- **错误隔离**：某个文件语法错误、工具名重复或定义不合法，只会让这个文件不可用，原因记录在 `load_errors` 中（`GET /api/tools`）；插件运行时抛出的异常被包装成 `PluginError` 观察结果交给模型，不会打断主循环。
+- **证据不能伪造**：harness 按返回内容的形状更新证据台账（不再按工具名判断），但只有当插件返回的原文与知识库中对应小节的原文完全一致时，才会记入台账、允许被引用。
 
 ## 依赖与版本
 
-openai 2.x（OpenAI 兼容协议调用 DeepSeek）、jieba 0.42（分词）、PyYAML（front matter）、python-dotenv、FastAPI 0.128 + uvicorn（演示 API）、pytest 7.4；前端 React 19 + TypeScript + react-router 7 + zustand 5（对话持久化到 localStorage）+ react-markdown（不渲染原始 HTML）+ Vite 8。没有使用任何 Agent 框架。
+openai 2.x（OpenAI 兼容协议调用模型与 embedding）、pymilvus（可选，仅 Milvus 向量存储）、jieba 0.42（分词）、PyYAML（front matter）、python-dotenv、FastAPI 0.128 + uvicorn（演示 API）、pytest 7.4；前端 React 19 + TypeScript + react-router 7 + zustand 5（对话持久化到 localStorage）+ react-markdown（不渲染原始 HTML）+ Vite 8。没有使用任何 Agent 框架。

@@ -16,7 +16,7 @@ from pathlib import Path
 
 import yaml
 
-from .retriever import BM25Retriever
+from .retrievers import Retriever, create_retriever
 
 DIR_META = "_dir.md"
 VALID_STATUS = {"现行", "已废止"}
@@ -127,22 +127,23 @@ def _as_list(value) -> list[str]:
 
 
 class KnowledgeBase:
-    def __init__(self, root: Path, docs: dict[str, Document], dirs: dict[str, Directory]):
+    def __init__(self, root: Path, docs: dict[str, Document], dirs: dict[str, Directory],
+                 retriever: Retriever | None = None):
         self.root = root
         self.docs = docs
         self.dirs = dirs
         self.sections: dict[str, Section] = {s.ref: s for d in docs.values() for s in d.sections}
-        self.retriever = BM25Retriever()
-        for doc in docs.values():
-            for sec in doc.sections:
-                # 上下文前缀：把“目录 / 文档 / 小节标题”拼到正文前再索引（上下文感知检索的轻量版）
-                prefix = f"{doc.category} {doc.doc_id} {doc.title} {sec.title}"
-                self.retriever.add(sec.ref, f"{prefix}\n{sec.text}")
-        self.retriever.build()
+        # 检索器可插拔（BM25 / 向量 / 混合），见 retrievers/registry.py
+        self.retriever = retriever or create_retriever()
+        # 上下文前缀：把“目录 / 文档 / 小节标题”拼到正文前再索引（上下文感知检索的轻量版）
+        self.retriever.index([
+            (sec.ref, f"{doc.category} {doc.doc_id} {doc.title} {sec.title}\n{sec.text}")
+            for doc in docs.values() for sec in doc.sections
+        ])
 
     # ---------- 加载与校验 ----------
     @classmethod
-    def load(cls, root: str | Path) -> "KnowledgeBase":
+    def load(cls, root: str | Path, retriever: Retriever | None = None) -> "KnowledgeBase":
         root = Path(root).resolve()
         problems: list[str] = []
         if not root.is_dir():
@@ -233,7 +234,7 @@ class KnowledgeBase:
             problems.append("知识库中没有任何文档")
         if problems:
             raise KBValidationError(problems)
-        return cls(root, docs, dirs)
+        return cls(root, docs, dirs, retriever)
 
     # ---------- L0：浏览目录 ----------
     def browse(self, path: str = "") -> dict:
@@ -308,4 +309,5 @@ class KnowledgeBase:
             "documents": len(self.docs),
             "sections": len(self.sections),
             "doc_ids": sorted(self.docs),
+            "retriever": self.retriever.name,
         }

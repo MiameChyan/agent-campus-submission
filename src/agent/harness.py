@@ -13,6 +13,7 @@ from ..kb.store import KnowledgeBase
 from ..llm.base import LLMClient, LLMError
 from ..tools.base import ToolExecutionError
 from ..tools.faults import FaultInjector
+from ..tools.plugin import PluginRegistry
 from ..tools.registry import build_tools, execute_business_tool
 from .gate import check_finish
 from .prompts import SYSTEM_PROMPT
@@ -50,6 +51,7 @@ class Agent:
         on_event: EventCallback | None = None,
         kb_label: str = "data/kb",
         should_stop: Callable[[], bool] | None = None,
+        plugins: PluginRegistry | None = None,
     ):
         self.llm, self.kb = llm, kb
         self.should_stop = should_stop or (lambda: False)   # 用户取消（如前端点“停止”、连接断开）
@@ -57,7 +59,7 @@ class Agent:
         self.faults = faults or FaultInjector()
         self.on_event = on_event or (lambda e: None)
         self.kb_label = kb_label
-        self.tools = build_tools(kb)
+        self.tools = build_tools(kb, plugins)   # 业务工具来自插件目录（热加载），见 tools/plugin.py
         self.tool_schemas = [t.schema() for t in self.tools.values()]
 
     # ------------------------------------------------------------------
@@ -210,24 +212,30 @@ class Agent:
         return obs, dict(action=name, args=shown_args, reason=reason, ok=obs.get("ok", False),
                          observation=observation, kind="business", elapsed_ms=elapsed)
 
-    @staticmethod
-    def _update_state(name: str, data: dict, state: RunState) -> None:
-        if name == "search":
-            for h in data.get("hits", []):
-                state.seen_docs.setdefault(h["doc_id"], {k: h[k] for k in ("doc_id", "title", "status", "version_date")})
-        elif name == "browse":
-            for d in data.get("documents", []):
-                state.seen_docs.setdefault(d["doc_id"], {k: d[k] for k in ("doc_id", "title", "status", "version_date")})
-        elif name == "outline":
-            state.seen_docs[data["doc_id"]] = {k: data[k] for k in ("doc_id", "title", "status", "version_date")}
-        elif name == "read_section":
-            ref = f"{data['doc_id']}#{data['section_id']}"
+    def _update_state(self, name: str, data, state: RunState) -> None:
+        """按返回内容的形状（而不是工具名）更新状态，新增的插件工具只要返回同样的结构就能接入。"""
+        if not isinstance(data, dict):
+            return
+
+        def seen(d: dict):
+            if d.get("doc_id") in self.kb.docs:
+                state.seen_docs.setdefault(d["doc_id"], self.kb.docs[d["doc_id"]].meta())
+
+        for item in list(data.get("hits") or []) + list(data.get("documents") or []):
+            if isinstance(item, dict):
+                seen(item)
+        if "doc_id" in data:
+            seen(data)
+        # 证据：返回了小节原文，且与知识库中的原文完全一致时才记入台账（插件不能伪造可引用的证据）
+        ref = f"{data.get('doc_id')}#{data.get('section_id')}"
+        sec = self.kb.sections.get(ref)
+        if sec is not None and data.get("text") == sec.text:
+            doc = self.kb.docs[sec.doc_id]
             state.evidence[ref] = EvidenceItem(
-                ref=ref, doc_id=data["doc_id"], section_id=data["section_id"], title=data["title"],
-                section_title=data["section_title"], version_date=data["version_date"], status=data["status"],
-                scope=data["scope"], supersedes=data["supersedes"], superseded_by=data["superseded_by"], text=data["text"],
+                ref=ref, doc_id=doc.doc_id, section_id=sec.section_id, title=doc.title, section_title=sec.title,
+                version_date=doc.version_date, status=doc.status, scope=doc.scope, supersedes=doc.supersedes,
+                superseded_by=doc.superseded_by, text=sec.text,
             )
-            state.seen_docs[data["doc_id"]] = {k: data[k] for k in ("doc_id", "title", "status", "version_date")}
 
     @staticmethod
     def _incomplete(reason: str, state: RunState) -> dict:
@@ -247,6 +255,7 @@ class Agent:
             "mode": self.llm.mode,
             "model": self.llm.name,
             "kb": self.kb_label,
+            "retriever": self.kb.retriever.name,
             "fault_injection": self.faults.describe() or None,
             "answer": outcome.get("answer", ""),
             "citations": outcome.get("citations", []),

@@ -5,6 +5,7 @@
   "mode": "offline_mock",
   "model": "mock-policy",
   "kb": "data/kb",
+  "retriever": "bm25",
   "fault_injection": "search:always,browse:always,outline:always,read_section:always",
   "answer": "检索服务连续失败，暂时无法回答该问题，请稍后重试。",
   "citations": [],

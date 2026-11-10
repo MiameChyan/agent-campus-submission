@@ -5,6 +5,7 @@
   "mode": "offline_mock",
   "model": "mock-policy",
   "kb": "data/kb",
+  "retriever": "bm25",
   "fault_injection": null,
   "answer": "资料存在冲突：D01 与 D02 的规定不一致，请确认适用哪份制度。",
   "citations": [
