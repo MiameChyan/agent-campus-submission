@@ -196,3 +196,12 @@ a { color: inherit; text-decoration: none; }
   .messages { padding: 20px 14px 8px; }
   .composer-dock { padding: 8px 12px 12px; }
 }
+
+/* 同一轮并行调用 */
+.parallel-tag {
+  margin-left: 8px; padding: 0 7px; border-radius: 999px; font-size: 11px;
+  background: var(--accent-soft); color: var(--accent-text); vertical-align: 1px;
+}
+.step-obs-list { margin: 2px 0 0; padding-left: 16px; color: var(--text-2); }
+.step-obs-list li { word-break: break-word; }
+.step-obs-list li.failed { color: var(--danger); }

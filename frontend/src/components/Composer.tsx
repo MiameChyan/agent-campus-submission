@@ -15,12 +15,13 @@ export default function Composer({ running, onSend, onStop, autoFocus }: Props) 
   const mock = useChat((s) => s.mock);
   const setMock = useChat((s) => s.setMock);
 
-  // 高度随内容增长（最多约 8 行）
+  // 高度随内容增长（最多约 8 行）。空内容时用自然高度：挂载瞬间布局未稳定，
+  // 占位文字可能被折成多行，按 scrollHeight 计算会把输入框撑高
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+    el.style.height = "";
+    if (text) el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
   }, [text]);
 
   const submit = () => {

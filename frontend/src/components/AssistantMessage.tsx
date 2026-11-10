@@ -29,29 +29,66 @@ const STATUS: Record<Status, { text: string; tone: "ok" | "warn" | "bad" }> = {
   cancelled: { text: "已停止", tone: "bad" },
 };
 
-/** 把一步 trace 翻译成人能读懂的一行 */
-function describe(s: Step): { icon: ReactNode; text: string } {
-  const a = s.args as Record<string, string>;
-  switch (s.action) {
+const ICONS: Record<string, ReactNode> = {
+  search: <Search size={14} />,
+  browse: <FolderOpen size={14} />,
+  outline: <BookOpen size={14} />,
+  read_section: <FileText size={14} />,
+  update_plan: <ListTodo size={14} />,
+  ask_user: <MessageCircleQuestion size={14} />,
+  finish: <Check size={14} />,
+};
+
+/** 同一动作的多次调用合并成一句话，如“阅读原文 D01#s3、D02#s1” */
+function describeAction(action: string, steps: Step[]): string {
+  const args = steps.map((s) => s.args as Record<string, string>);
+  const list = (f: (a: Record<string, string>) => string) => args.map(f).join("、");
+  switch (action) {
     case "search":
-      return { icon: <Search size={14} />, text: `检索「${a.query}」` };
+      return `检索${args.map((a) => `「${a.query}」`).join("")}`;
     case "browse":
-      return { icon: <FolderOpen size={14} />, text: `浏览目录 ${a.path || "/"}` };
+      return `浏览目录 ${list((a) => a.path || "/")}`;
     case "outline":
-      return { icon: <BookOpen size={14} />, text: `查看 ${a.doc_id} 的版本与适用范围` };
+      return `查看 ${list((a) => a.doc_id)} 的版本与适用范围`;
     case "read_section":
-      return { icon: <FileText size={14} />, text: `阅读原文 ${a.doc_id}#${a.section_id}` };
+      return `阅读原文 ${list((a) => `${a.doc_id}#${a.section_id}`)}`;
     case "update_plan":
-      return { icon: <ListTodo size={14} />, text: "整理检索计划" };
+      return "整理检索计划";
     case "ask_user":
-      return { icon: <MessageCircleQuestion size={14} />, text: "向你追问" };
+      return "向你追问";
     case "finish":
-      return s.ok
-        ? { icon: <Check size={14} />, text: "校验引用并提交回答" }
-        : { icon: <ShieldAlert size={14} />, text: "引用校验未通过，退回修改" };
+      return steps.every((s) => s.ok) ? "校验引用并提交回答" : "引用校验未通过，退回修改";
     default:
-      return { icon: <AlertTriangle size={14} />, text: s.observation };
+      return steps.map((s) => s.observation).join("；");
   }
+}
+
+interface Round {
+  turn: number;
+  steps: Step[];
+  title: string;
+  icon: ReactNode;
+  failed: boolean;
+  reasons: string[];
+}
+
+/** 按模型轮次分组：同一轮里并行发出的调用合并为一条 */
+function toRounds(steps: Step[]): Round[] {
+  const rounds: Round[] = [];
+  for (const s of steps) {
+    const last = rounds[rounds.length - 1];
+    if (last && last.turn === s.turn) last.steps.push(s);
+    else rounds.push({ turn: s.turn, steps: [s], title: "", icon: null, failed: false, reasons: [] });
+  }
+  for (const r of rounds) {
+    const actions = [...new Set(r.steps.map((s) => s.action))];
+    r.title = actions.map((a) => describeAction(a, r.steps.filter((s) => s.action === a))).join(" · ");
+    r.failed = r.steps.some((s) => !s.ok);
+    r.icon = r.failed && r.steps.every((s) => !s.ok) ? <X size={14} /> : ICONS[actions[0]] ?? <AlertTriangle size={14} />;
+    if (actions[0] === "finish" && r.failed) r.icon = <ShieldAlert size={14} />;
+    r.reasons = [...new Set(r.steps.map((s) => s.reason).filter(Boolean))];
+  }
+  return rounds;
 }
 
 function Process({ turn }: { turn: Turn }) {
@@ -68,10 +105,11 @@ function Process({ turn }: { turn: Turn }) {
   }, [running]);
 
   const seconds = Math.max(1, Math.round(((turn.endedAt ?? now) - turn.startedAt) / 1000));
-  const last = turn.steps[turn.steps.length - 1];
+  const rounds = toRounds(turn.steps);
+  const last = rounds[rounds.length - 1];
   const label = running
-    ? last ? `${describe(last).text}…` : "正在思考…"
-    : `已检索 ${turn.steps.length} 步 · 用时 ${seconds} 秒`;
+    ? last ? `${last.title}…` : "正在思考…"
+    : `已检索 ${rounds.length} 轮 · 调用工具 ${turn.steps.length} 次 · 用时 ${seconds} 秒`;
 
   return (
     <div className="process">
@@ -79,21 +117,31 @@ function Process({ turn }: { turn: Turn }) {
         {running ? <Loader2 size={14} className="spin" /> : open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
         <span>{label}</span>
       </button>
-      {open && turn.steps.length > 0 && (
+      {open && rounds.length > 0 && (
         <ol className="process-steps">
-          {turn.steps.map((s) => {
-            const d = describe(s);
-            return (
-              <li key={s.step} className={s.ok ? "" : "failed"}>
-                <span className="step-icon">{s.ok ? d.icon : <X size={14} />}</span>
-                <div>
-                  <div className="step-title">{d.text}</div>
-                  <div className="step-obs">{s.observation}</div>
-                  {s.reason && <div className="step-reason">依据：{s.reason}</div>}
+          {rounds.map((r) => (
+            <li key={r.steps[0].step} className={r.failed ? "failed" : ""}>
+              <span className="step-icon">{r.icon}</span>
+              <div>
+                <div className="step-title">
+                  {r.title}
+                  {r.steps.length > 1 && <span className="parallel-tag">并行 {r.steps.length} 项</span>}
                 </div>
-              </li>
-            );
-          })}
+                {r.steps.length === 1 ? (
+                  <div className="step-obs">{r.steps[0].observation}</div>
+                ) : (
+                  <ul className="step-obs-list">
+                    {r.steps.map((s) => (
+                      <li key={s.step} className={s.ok ? "" : "failed"}>
+                        {s.observation}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {r.reasons.length > 0 && <div className="step-reason">依据：{r.reasons.join("；")}</div>}
+              </div>
+            </li>
+          ))}
         </ol>
       )}
     </div>
