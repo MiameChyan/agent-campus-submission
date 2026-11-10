@@ -24,15 +24,18 @@ from src.main import build_agent  # noqa: E402
 CASES = ROOT / "examples" / "cases"
 
 
-def run_case(path: Path, mode: str, out_dir: Path) -> dict:
+def run_case(path: Path, mode: str, out_dir: Path, report_only: bool = False) -> dict:
     case = json.loads(path.read_text(encoding="utf-8"))
     name = path.name.removesuffix(".input.json")
     opts = case.get("options") or {}
-    agent = build_agent(mock=(mode == "mock"), kb=opts.get("kb"), fail=opts.get("fail"),
-                        max_llm_turns=opts.get("max_llm_turns"), max_tool_calls=opts.get("max_tool_calls"))
-    result = agent.run(case["question"], case.get("history"))
-    (out_dir / f"{name}.output.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    (out_dir / f"{name}.trace.md").write_text(render_markdown(result), encoding="utf-8")
+    if report_only:  # 不重新调用模型，用已保存的输出按当前断言重新判定
+        result = json.loads((out_dir / f"{name}.output.json").read_text(encoding="utf-8"))
+    else:
+        agent = build_agent(mock=(mode == "mock"), kb=opts.get("kb"), fail=opts.get("fail"),
+                            max_llm_turns=opts.get("max_llm_turns"), max_tool_calls=opts.get("max_tool_calls"))
+        result = agent.run(case["question"], case.get("history"))
+        (out_dir / f"{name}.output.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        (out_dir / f"{name}.trace.md").write_text(render_markdown(result), encoding="utf-8")
     checks = check_expect(case.get("expect", {}), result)
     passed = all(c["ok"] for c in checks)
     limitation = (case.get("expect") or {}).get("mock_known_limitation") if mode == "mock" else None
@@ -48,7 +51,7 @@ def write_report(rows: list[dict], mode: str, out_dir: Path, model: str) -> Path
         "",
         f"- 运行时间：{_dt.datetime.now().strftime('%Y-%m-%d %H:%M')}",
         f"- 结果：{n_pass}/{len(rows)} 通过",
-        "- 命令：`python scripts/run_eval.py --mode " + mode + "`",
+        "- 命令：`python scripts/run_eval.py --mode " + mode + "`（`--report-only` 可不调用模型、按当前断言重新判定已保存输出）",
         "",
         "| 用例 | 验收点 | 实际状态 | 结论 | 执行路径（动作序列） | 模型轮数/工具次数 | 输出 / Trace |",
         "|---|---|---|---|---|---|---|",
@@ -78,6 +81,7 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--mode", choices=["live", "mock"], required=True)
     parser.add_argument("--cases", nargs="*", help="只运行指定用例（文件名前缀）")
+    parser.add_argument("--report-only", action="store_true", help="不调用模型，用已保存的输出重新判定并生成报告")
     args = parser.parse_args(argv)
     out_dir = ROOT / "examples" / args.mode
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -86,7 +90,7 @@ def main(argv=None) -> int:
         files = [f for f in files if any(f.name.startswith(c) for c in args.cases)]
     rows = []
     for f in files:
-        row = run_case(f, args.mode, out_dir)
+        row = run_case(f, args.mode, out_dir, args.report_only)
         rows.append(row)
         mark = "PASS" if row["passed"] else ("LIMIT" if row["known_limitation"] else "FAIL")
         print(f"[{mark}] {row['case']:<28} {row['status']:<28} {' → '.join(row['path'])}", flush=True)

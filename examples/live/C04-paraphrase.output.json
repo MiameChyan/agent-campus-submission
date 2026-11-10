@@ -1,0 +1,204 @@
+{
+  "question": "发票最晚多少天内要交上去？",
+  "status": "conflict_needs_confirmation",
+  "incomplete_reason": null,
+  "mode": "live",
+  "model": "deepseek-flash",
+  "kb": "data/kb",
+  "fault_injection": null,
+  "answer": "关于“发票最晚多少天内交上去”，知识库中两份**都标注为现行**的文件给出了不同期限，且没有明确的替代/废止或优先适用条款，因此无法直接给出唯一答案：\n\n1. 《报销管理补充通知》（D02，2025-01-10）“一、提交期限”：员工报销申请应在费用发生后 **15 天内**提交。\n2. 《费用报销制度》（D01，2024-03-01）“第三条 报销期限”：员工应在费用发生之日起 **30 天内**提交报销申请，逾期提交须由部门负责人书面说明原因。\n\n说明与需要确认的点：\n- 两份文档状态均为“现行”，在系统中互相链接（D01↔D02），但 supersedes/superseded_by 均为空，即没有任何一份写明替代或废止对方；两份的“适用范围”栏也均为“未注明”，无法从范围上区分。\n- D02 发布日期更晚（2025-01-10 > 2024-03-01）且名为“补充通知”，但文本中并未写明“以本通知为准”或“原制度相应条款停止执行”，因此不宜由我自行判定其覆盖 D01。\n- 建议向财务部确认：报销提交期限是否按 D02 的 15 天执行、D01 的 30 天条款是否仍然有效。\n- 实务提示（在确认前）：按较严格的 15 天口径把控风险更稳妥，但这不是已确认的制度结论。\n\n另注：检索过程中命中的《年假制度》相关文档与发票/报销时限无关，未作为依据。",
+  "citations": [
+    {
+      "doc_id": "D02",
+      "section_id": "s1",
+      "title": "报销管理补充通知",
+      "section_title": "一、提交期限",
+      "version_date": "2025-01-10",
+      "doc_status": "现行",
+      "quote": "为加快财务结算，员工报销申请应在费用发生后 15 天内提交。"
+    },
+    {
+      "doc_id": "D01",
+      "section_id": "s3",
+      "title": "费用报销制度",
+      "section_title": "第三条 报销期限",
+      "version_date": "2024-03-01",
+      "doc_status": "现行",
+      "quote": "员工应在费用发生之日起 30 天内提交报销申请，逾期提交须由部门负责人书面说明原因。"
+    },
+    {
+      "doc_id": "D02",
+      "section_id": "s2",
+      "title": "报销管理补充通知",
+      "section_title": "二、电子发票",
+      "version_date": "2025-01-10",
+      "doc_status": "现行",
+      "quote": "自本通知发布之日起，优先使用电子发票报销；纸质发票须在背面注明报销人姓名。"
+    }
+  ],
+  "conflicts": [
+    {
+      "description": "报销/发票提交期限不一致：D02《报销管理补充通知》（2025-01-10，现行）要求费用发生后 15 天内提交；D01《费用报销制度》（2024-03-01，现行）规定费用发生之日起 30 天内提交。两份文档均无 supersedes/superseded_by 声明，适用范围均未注明，无法确定哪份优先适用。",
+      "doc_ids": [
+        "D01",
+        "D02"
+      ]
+    }
+  ],
+  "gaps": [
+    "两份制度均未注明适用范围，无法据此判断适用对象差异",
+    "D02 未写明“以本通知为准”或废止 D01 的 30 天条款，缺少明确的效力关系说明",
+    "知识库中未见财务部关于 15 天与 30 天期限如何衔接的进一步解释或问答"
+  ],
+  "clarifying_question": null,
+  "stats": {
+    "llm_turns": 5,
+    "tool_calls": 8,
+    "tool_calls_by_name": {
+      "search": 2,
+      "browse": 1,
+      "outline": 2,
+      "read_section": 3
+    },
+    "gate_rejections": 0,
+    "budget": {
+      "max_llm_turns": 8,
+      "max_tool_calls": 12
+    },
+    "prompt_tokens": 19064,
+    "completion_tokens": 2087,
+    "elapsed_ms": 16706
+  },
+  "trace": [
+    {
+      "step": 1,
+      "turn": 1,
+      "action": "search",
+      "args": {
+        "query": "发票 提交 时限 报销",
+        "top_k": 6
+      },
+      "reason": "用户问发票最晚多少天内提交，先按报销/发票关键制度词检索",
+      "ok": true,
+      "observation": "“发票 提交 时限 报销” 命中 6 条：D01#s2 第二条 单据要求(现行)；D02#s2 二、电子发票(现行)；D02#s1 一、提交期限(现行)；D01#s3 第三条 报销期限(现行)",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "browse"
+    },
+    {
+      "step": 2,
+      "turn": 1,
+      "action": "browse",
+      "args": {
+        "path": "制度/财务"
+      },
+      "reason": "检索可能不准，同时看财务制度目录下有哪些文档",
+      "ok": true,
+      "observation": "目录 制度/财务：子目录 无；文档 D01(现行)、D02(现行)",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "outline"
+    },
+    {
+      "step": 3,
+      "turn": 2,
+      "action": "outline",
+      "args": {
+        "doc_id": "D01"
+      },
+      "reason": "查 D01 的版本、状态、替代关系与适用范围，判断 30 天是否仍适用",
+      "ok": true,
+      "observation": "D01《费用报销制度》现行 2024-03-01 范围:未注明  小节 4 个",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "outline"
+    },
+    {
+      "step": 4,
+      "turn": 2,
+      "action": "outline",
+      "args": {
+        "doc_id": "D02"
+      },
+      "reason": "查 D02 是否为对 D01 的修订/替代，15 天期限的适用范围与生效条件",
+      "ok": true,
+      "observation": "D02《报销管理补充通知》现行 2025-01-10 范围:未注明  小节 2 个",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 5,
+      "turn": 3,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D01",
+        "section_id": "s3"
+      },
+      "reason": "读 D01 报销期限原文，确认 30 天的完整表述与例外",
+      "ok": true,
+      "observation": "D01#s3（现行）第三条 报销期限：员工应在费用发生之日起 30 天内提交报销申请，逾期提交须由部门负责人书面说明原因。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 6,
+      "turn": 3,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D02",
+        "section_id": "s1"
+      },
+      "reason": "读 D02 提交期限原文，确认 15 天的完整表述及是否声明替代/优先",
+      "ok": true,
+      "observation": "D02#s1（现行）一、提交期限：为加快财务结算，员工报销申请应在费用发生后 15 天内提交。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "search"
+    },
+    {
+      "step": 7,
+      "turn": 4,
+      "action": "search",
+      "args": {
+        "query": "以本通知为准 优先适用 废止 报销期限",
+        "top_k": 5
+      },
+      "reason": "确认是否存在规定 D02 与 D01 优先适用的条款",
+      "ok": true,
+      "observation": "“以本通知为准 优先适用 废止 报销期限” 命中 5 条：D02#s2 二、电子发票(现行)；D01#s3 第三条 报销期限(现行)；D02#s1 一、提交期限(现行)；D01#s1 第一条 适用范围(现行)",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "read_section"
+    },
+    {
+      "step": 8,
+      "turn": 4,
+      "action": "read_section",
+      "args": {
+        "doc_id": "D02",
+        "section_id": "s2"
+      },
+      "reason": "看 D02 全文另一小节是否含适用范围或与 D01 的关系说明",
+      "ok": true,
+      "observation": "D02#s2（现行）二、电子发票：自本通知发布之日起，优先使用电子发票报销；纸质发票须在背面注明报销人姓名。",
+      "kind": "business",
+      "elapsed_ms": 0,
+      "next_action": "finish"
+    },
+    {
+      "step": 9,
+      "turn": 5,
+      "action": "finish",
+      "args": {
+        "status": "conflict_needs_confirmation"
+      },
+      "reason": "两份现行文件对提交期限规定不一致且无替代或优先适用条款，按规则需列出各方说法并请用户/财务确认",
+      "ok": true,
+      "observation": "闸门通过，状态 conflict_needs_confirmation，有效引用 3 条",
+      "kind": "terminal",
+      "next_action": "（结束）"
+    }
+  ]
+}
